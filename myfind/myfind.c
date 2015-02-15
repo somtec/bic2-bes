@@ -1,5 +1,5 @@
 /**
- * @file main.c
+ * @file myfind.c
  * Betriebssysteme Main file for myfind, reduced find version in linux.
  * Beispiel 1
  *
