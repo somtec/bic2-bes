@@ -54,7 +54,7 @@
 
 /**
  *
- * \brief Andrea
+ * \brief myfind is a imple replacement for linux find.
  *
  * This is the main entry point for any C program.
  *
