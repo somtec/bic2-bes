@@ -70,6 +70,7 @@ int main(int argc, const char *argv[])
     /* prevent warnings regarding unused params */
 
     printf("Hello world!\n");
+    printf("Hello world from Reinhard!\n");
     printf("%d\n", argc);
     printf("%s finished.\n", argv[0]);
     return 0;
