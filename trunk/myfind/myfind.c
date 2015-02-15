@@ -22,6 +22,19 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <dirent.h>
+#include <sys/types.h>
+#include <pwd.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <errno.h>
+#include <grp.h>
+#include <pwd.h>
+#include <time.h>
+#include <fnmatch.h>
+#include <unistd.h>
 
 /*
  * --------------------------------------------------------------- defines --
