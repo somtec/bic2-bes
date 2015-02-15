@@ -41,7 +41,7 @@
 
 /**
  *
- * \brief The most minimalistic C program
+ * \brief Andrea
  *
  * This is the main entry point for any C program.
  *
