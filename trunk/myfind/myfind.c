@@ -39,7 +39,7 @@
 /*
  * --------------------------------------------------------------- defines --
  */
-/* DEBUG_OUTPUT 0 is without debug_print(), else debug_print() function active. */
+/** DEBUG_OUTPUT 0 is without debug_print(), else debug_print() function active. */
 #define DEBUG_OUTPUT 1
 
 /* supported parameters of myfind */
@@ -123,7 +123,7 @@ int main(int argc, const char* argv[])
  * \brief debug_output prints debug messages.
  *
  * Does not append \n to message output.
- * .
+ *
  * \param message output on stdout.
  * \retval void
  *
