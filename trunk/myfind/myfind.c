@@ -42,9 +42,40 @@
 /* DEBUG_OUTPUT 0 is without debug_print(), else debug_print() function active. */
 #define DEBUG_OUTPUT 1
 
+/* supported parameters of myfind */
+#define PARAM_STR_USER "-user"
+#define PARAM_STR_NOUSER "-nouser"
+#define PARAM_STR_NAME "-name"
+#define PARAM_STR_PATH "-path"
+#define PARAM_STR_TYPE "-type"
+#define PARAM_STR_LS "-ls"
+#define PARAM_STR_PRINT "-print"
+#define PARAM_STR_HELP "-help"
+#define PARAM_STR_TYPE_VALS "bcdflps"
+
+/* Output strings if myfind fails. */
+#define CHECKSTRINGFORPARAMVALUE_INFO_STR_PARAM "The parameter %s needs correct additional information.\n"
+#define CHECKSTRINGFORPARAMVALUE_INFO_STR_PATH "The path is missing.\n"
 /*
  * -------------------------------------------------------------- typedefs --
  */
+
+/**
+    The enumeration of available parameters for myfind.
+*/
+typedef enum ParametersEnum
+{
+   NONE, /** myfind wihthout any parameters. */
+   USER, /** Only files by this user. */
+   NOUSER, /** Only files which have no user. */
+   NAME, /** Files with the given filename pattern. */
+   PATH, /** Start path where myfind should start. */
+   TYPE, /** Type of linux file system types. */
+   LS, /** Print like in Linux LS output. */
+   PRINT, /** Print the name of the directory entry. */
+   HELP, /* Print usage like all Linux bash commands. */
+} Parameters;
+
 
 /*
  * --------------------------------------------------------------- globals --
@@ -60,6 +91,7 @@ void debug_print(const char* message);
 void debug_print(__attribute((unused))const char* message) {}
 #endif /* DEBUG_OUTPUT */
 
+void print_usage(void);
 int do_file(const char* file_name, const char* const params);
 int do_dir(const char* dir_name, const char* const * parms);
 
@@ -102,6 +134,24 @@ void debug_print(const char* message)
 #endif /* DEBUG_OUTPUT != 0 */
 
 
+/**
+ *
+ * \brief Print the help.
+ *
+ * \return void
+ */
+void print_usage(void)
+{
+    printf("Usage: myfind <path> [arguments].\n");
+    printf("Arguments: -user <username|userid>\n");
+    printf("           -nouser\n");
+    printf("           -type <type>\n");
+    printf("           -path <pathpattern>\n");
+    printf("           -path <namepattern>\n");
+    printf("           -print\n");
+    printf("           -ls\n");
+    printf("           -help\n");
+}
 
 
 
