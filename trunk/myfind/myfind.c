@@ -41,11 +41,21 @@
  */
 /* DEBUG_OUTPUT 0 is without debug_print(), else debug_print() function active. */
 #define DEBUG_OUTPUT 1
-
+#define PARAM_STR_USER "-user"
+#define PARAM_STR_NOUSER "-nouser"
+#define PARAM_STR_NAME "-name"
+#define PARAM_STR_PATH "-path"
+#define PARAM_STR_TYPE "-type"
+#define PARAM_STR_LS "-ls"
+#define PARAM_STR_PRINT "-print"
+#define PARAM_STR_HELP "-help"
+#define PARAM_STR_TYPE_VALS "bcdflps"
+#define CHECKSTRINGFORPARAMVALUE_INFO_STR_PARAM "The Parameter %s needs correct additional information\n"
+#define CHECKSTRINGFORPARAMVALUE_INFO_STR_PATH "The Path is Missing\n"
 /*
  * -------------------------------------------------------------- typedefs --
  */
-
+typedef enum Parameters {NONE, USER, NOUSER, NAME, PATH, TYPE, LS, PRINT, HELP} Parameters;
 /*
  * --------------------------------------------------------------- globals --
  */
@@ -58,6 +68,25 @@ void debug_print(const char* message);
 #else /* DEBUG_OUTPUT */
 void debug_print(__attribute((unused))const char* message) {}
 #endif /* DEBUG_OUTPUT */
+
+/**
+ *
+ * \brief Print the help
+ *
+ * \return void
+ */
+void print_usage()
+{
+	printf("Usage: myfind <path> [arguments]\n");
+	printf("Arguments: -user <username|userid>\n");
+	printf("           -nouser\n");
+	printf("           -type <type>\n");
+	printf("           -path <pathpattern>\n");
+	printf("           -path <namepattern>\n");
+	printf("           -print\n");
+	printf("           -ls\n");
+	printf("           -help\n");
+}
 
 /**
  *
