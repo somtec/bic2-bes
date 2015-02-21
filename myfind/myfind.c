@@ -1,14 +1,14 @@
 /**
  * @file myfind.c
- * Betriebssysteme Main file for myfind, reduced find version in linux.
- * Beispiel 1
+ * Betriebssysteme Main file for myfind, which is a reduced find version of Linux.
+ * Example 1
  *
  * @author Andrea Maierhofer <andrea.maierhofer@technikum-wien.at>
  * @author Reinhard Mayr <reinhard.mayr@technikum-wien.at>
  * @author Thomas Schmid <thomas.schmid@technikum-wien.at>
  * @date 2015/02/15
  *
- * @version 1
+ * @version SVN $Revision$
  *
  * @todo Test it more seriously and more complete.
  * @todo Review it for missing error checks.
@@ -41,21 +41,11 @@
  */
 /* DEBUG_OUTPUT 0 is without debug_print(), else debug_print() function active. */
 #define DEBUG_OUTPUT 1
-#define PARAM_STR_USER "-user"
-#define PARAM_STR_NOUSER "-nouser"
-#define PARAM_STR_NAME "-name"
-#define PARAM_STR_PATH "-path"
-#define PARAM_STR_TYPE "-type"
-#define PARAM_STR_LS "-ls"
-#define PARAM_STR_PRINT "-print"
-#define PARAM_STR_HELP "-help"
-#define PARAM_STR_TYPE_VALS "bcdflps"
-#define CHECKSTRINGFORPARAMVALUE_INFO_STR_PARAM "The Parameter %s needs correct additional information\n"
-#define CHECKSTRINGFORPARAMVALUE_INFO_STR_PATH "The Path is Missing\n"
+
 /*
  * -------------------------------------------------------------- typedefs --
  */
-typedef enum Parameters {NONE, USER, NOUSER, NAME, PATH, TYPE, LS, PRINT, HELP} Parameters;
+
 /*
  * --------------------------------------------------------------- globals --
  */
@@ -66,31 +56,16 @@ typedef enum Parameters {NONE, USER, NOUSER, NAME, PATH, TYPE, LS, PRINT, HELP} 
 #if DEBUG_OUTPUT
 void debug_print(const char* message);
 #else /* DEBUG_OUTPUT */
+/* suppress debug_print output */
 void debug_print(__attribute((unused))const char* message) {}
 #endif /* DEBUG_OUTPUT */
 
-/**
- *
- * \brief Print the help
- *
- * \return void
- */
-void print_usage()
-{
-	printf("Usage: myfind <path> [arguments]\n");
-	printf("Arguments: -user <username|userid>\n");
-	printf("           -nouser\n");
-	printf("           -type <type>\n");
-	printf("           -path <pathpattern>\n");
-	printf("           -path <namepattern>\n");
-	printf("           -print\n");
-	printf("           -ls\n");
-	printf("           -help\n");
-}
+int do_file(const char* file_name, const char* const params);
+int do_dir(const char* dir_name, const char* const * parms);
 
 /**
  *
- * \brief myfind is a imple replacement for linux find.
+ * \brief main implements a a simple replacement for Linux find.
  *
  * This is the main entry point for any C program.
  *
@@ -125,6 +100,8 @@ void debug_print(const char* message)
     printf("DGB: %s", message);
 }
 #endif /* DEBUG_OUTPUT != 0 */
+
+
 
 
 
