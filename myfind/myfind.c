@@ -39,6 +39,8 @@
 /*
  * --------------------------------------------------------------- defines --
  */
+/* DEBUG_OUTPUT 0 is without debug_print(), else debug_print() function active. */
+#define DEBUG_OUTPUT 1
 
 /*
  * -------------------------------------------------------------- typedefs --
@@ -51,6 +53,11 @@
 /*
  * ------------------------------------------------------------- functions --
  */
+#if DEBUG_OUTPUT
+void debug_print(const char* message);
+#else /* DEBUG_OUTPUT */
+void debug_print(__attribute((unused))const char* message) {}
+#endif /* DEBUG_OUTPUT */
 
 /**
  *
@@ -65,16 +72,32 @@
  * \retval 0 always
  *
  */
-int main(int argc, const char *argv[])
+int main(int argc, const char* argv[])
 {
     /* prevent warnings regarding unused params */
-
-    printf("Hello world!\n");
-    printf("Hello world from Reinhard!\n");
-    printf("%d\n", argc);
-    printf("%s finished.\n", argv[0]);
-    return 0;
+    debug_print("Hello world with debug_print.\n");
+    printf("Program finished.\n");
+    return EXIT_SUCCESS;
 }
+
+#if DEBUG_OUTPUT != 0
+/**
+ *
+ * \brief debug_output prints debug messages.
+ *
+ * Does not append \n to message output.
+ * .
+ * \param message output on stdout.
+ * \retval void
+ *
+ */
+void debug_print(const char* message)
+{
+    printf("DGB: %s", message);
+}
+#endif /* DEBUG_OUTPUT != 0 */
+
+
 
 /*
  * =================================================================== eof ==
