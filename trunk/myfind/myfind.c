@@ -73,7 +73,7 @@ typedef enum ParametersEnum
    TYPE, /** Type of linux file system types. */
    LS, /** Print like in Linux LS output. */
    PRINT, /** Print the name of the directory entry. */
-   HELP, /* Print usage like all Linux bash commands. */
+   HELP  /* Print usage like all Linux bash commands. */
 } Parameters;
 
 
@@ -112,6 +112,7 @@ int main(int argc, const char* argv[])
 {
     /* prevent warnings regarding unused params */
     debug_print("Hello world with debug_print.\n");
+    printf("%d %s\n", argc, argv[0]);
     printf("Program finished.\n");
     return EXIT_SUCCESS;
 }
