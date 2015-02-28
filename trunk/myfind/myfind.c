@@ -418,6 +418,15 @@ boolean user_exist(const char* user_name)
     return TRUE;
 }
 
+/**
+ * \brief Test if file has no user.
+ *
+ * \return FALSE File has a user, TRUE file has no user in user id data base.
+ */
+boolean has_no_user(const struct stat* file_info)
+{
+    return (NULL != getpwuid(file_info->st_uid));
+}
 
 /**
  *
