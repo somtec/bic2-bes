@@ -120,10 +120,12 @@ void debug_print(__attribute((unused))const char* message)
 
 void print_usage(void);
 int do_file(const char* file_name, const char* const * params);
-int do_dir(const char* dir_name, const char* const * parms);
+int do_dir(const char* dir_name, const char* const * params);
 void print_error(const char* message);
 int init(const char** program_args);
 void cleanup(void);
+
+void filter_name(const StatType* stBuf, const char* const * params);
 
 /**
  *
@@ -256,6 +258,8 @@ int do_dir(const char* dir_name, const char* const * params)
             print_error(sprint_buffer);
         } else if (S_ISREG(stbuf.st_mode))
         {
+        	filter_name(&stbuf, params);
+
             /* TODO: print the file as it is wanted due to filter */
             fprintf(stdout, "File: %s\n", sread_path);
         } else if (S_ISDIR(stbuf.st_mode))
@@ -357,6 +361,26 @@ void print_error(const char* message)
 {
     fprintf(stderr, "ERROR in %s: %s\n", sprogram_arg0, message);
 }
+
+
+
+/**
+ *
+ * \applies -name filter (if defined) to .
+ *
+ * !!!!! Five exclamation marks, the sure sign of an insane mind
+ *
+ * \param pointer to buffer with file stat
+ * \return void
+ */
+
+ void filter_name(const StatType* stBuf, const char* const * params)
+ {
+
+	 return;
+ }
+
+
 /*
  * =================================================================== eof ==
  */
