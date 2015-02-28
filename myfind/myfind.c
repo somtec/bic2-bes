@@ -137,6 +137,7 @@ void print_error(const char* message);
 int init(const char** program_args);
 void cleanup(void);
 boolean user_exist(const char* user_name);
+boolean has_no_user(const struct stat* file_info);
 
 void filter_name(const StatType* stBuf, const char* const * params);
 
