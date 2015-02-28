@@ -37,7 +37,6 @@
 #include <unistd.h>
 
 #include <limits.h>
-#include <errno.h>
 
 /*
  * --------------------------------------------------------------- defines --
@@ -85,6 +84,17 @@ typedef enum ParametersEnum
  */
 typedef struct stat StatType;
 
+/**
+ * The enumeration addition for bool type.
+ */
+typedef enum booleanEnum
+{
+    /** Boolean false. */
+    FALSE,
+    /** Boolean true. */
+    TRUE
+} boolean;
+
 /*
  * --------------------------------------------------------------- globals --
  */
@@ -108,6 +118,8 @@ static const long MAX_PRINT_BUFFER = 1000;
 /** Print buffer for printout on stderr. */
 static char* sprint_buffer = NULL;
 
+/** Want to convert user id number into decimal number. */
+static const int suserid_base = 10;
 /* ------------------------------------------------------------- functions --
  */
 #if DEBUG_OUTPUT
@@ -124,6 +136,7 @@ int do_dir(const char* dir_name, const char* const * params);
 void print_error(const char* message);
 int init(const char** program_args);
 void cleanup(void);
+boolean user_exist(const char* user_name);
 
 void filter_name(const StatType* stBuf, const char* const * params);
 
@@ -365,6 +378,45 @@ void print_error(const char* message)
 {
     fprintf(stderr, "ERROR in %s: %s\n", sprogram_arg0, message);
 }
+
+/**
+ *\brief Determines if the given user exists.
+ *
+ * Check if the given user exist as an user or user id on the system.
+ *
+ *\params user_name to be queried.
+ *\
+ *\return FALSE user does not exist, TRUE user exists.
+ */
+boolean user_exist(const char* user_name)
+{
+    struct passwd* pwd = NULL;
+    char* end_userid = NULL;
+    uid_t uid = 0;
+
+    pwd = getpwnam(user_name);
+
+    if (NULL != pwd)
+    {
+        return TRUE;
+    }
+
+    /* is it a user id instead of a user name? */
+    uid = (uid_t)strtol(user_name, &end_userid, suserid_base);
+    if (0 == uid)
+    {
+        return FALSE;
+    }
+
+    pwd = getpwuid(uid);
+    if (NULL == pwd)
+    {
+         return FALSE;
+    }
+
+    return TRUE;
+}
+
 
 /**
  *
