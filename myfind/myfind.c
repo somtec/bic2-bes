@@ -80,6 +80,28 @@ typedef enum ParametersEnum
 } Parameters;
 
 /**
+ The enumeration of filtered file type .
+ */
+typedef enum FileTypeEnum
+{
+    /** File type unknown */
+    FILE_TYPE_UNKNOWN,
+    /** File type block, e. g. hard disk. */
+    FILE_TYPE_BLOCK,
+    /** File type char e. g. terminal. */
+    FILE_TYPE_CHAR,
+    /** File type directory. */
+    FILE_TYPE_DIRECTORY,
+    /** File type pipe e. g. fifo. */
+    FILE_TYPE_PIPE,
+    /** File type regular file. */
+    FILE_TYPE_FILE,
+    /** File type link e. g. symbolic link. */
+    FILE_TYPE_LINK,
+    /** File type socket e. g. stream for communication. */
+    FILE_TYPE_SOCKET
+} FileType;
+/**
  * The struct type for stat return value.
  */
 typedef struct stat StatType;
@@ -138,6 +160,8 @@ int init(const char** program_args);
 void cleanup(void);
 boolean user_exist(const char* user_name);
 boolean has_no_user(const struct stat* file_info);
+FileType get_file_type(const struct stat* file_info);
+FileType get_file_type_info(const char param);
 
 void filter_name(const StatType* stBuf, const char* const * params);
 
@@ -267,7 +291,7 @@ int do_dir(const char* dir_name, const char* const * params)
         /*get information about the file and catch errors*/
         if (stat(sread_path, &stbuf) == -1)
         {
-            snprintf(sprint_buffer, MAX_PRINT_BUFFER, "Can not stat file %s\n", sread_path);
+            snprintf(sprint_buffer, MAX_PRINT_BUFFER, "Can not read file status of file %s\n", sread_path);
             print_error(sprint_buffer);
         } else if (S_ISREG(stbuf.st_mode))
         {
@@ -427,6 +451,55 @@ boolean has_no_user(const struct stat* file_info)
 {
     return (NULL != getpwuid(file_info->st_uid));
 }
+
+/**
+ * \brief Query file type of given file.
+ */
+FileType get_file_type(const struct stat* file_info)
+{
+
+    FileType result = FILE_TYPE_UNKNOWN;
+
+    if (S_ISBLK(file_info->st_mode))
+    {
+        result = FILE_TYPE_BLOCK;
+    }
+#if 0
+    else if (S_ISREG(file_info->st_mode))
+    {
+
+    }
+    else if (S_ISREG(file_info->st_mode))
+    {
+
+    }
+
+
+    FILE_TYPE_CHAR,
+    /** File type directory. */
+    FILE_TYPE_DIRECTORY,
+    /** File type pipe e. g. fifo. */
+    FILE_TYPE_PIPE,
+    /** File type regular file. */
+    FILE_TYPE_FILE,
+    /** File type link e. g. symbolic link. */
+    FILE_TYPE_LINK,
+    /** File type socket e. g. stream for communication. */
+    FILE_TYPE_SOCKET
+
+#endif /* 0 */
+    return result;
+
+
+}
+
+FileType get_file_type_info(__attribute__((unused))const char param)
+{
+
+    FileType result = FILE_TYPE_UNKNOWN;
+    return result;
+}
+
 
 /**
  *
