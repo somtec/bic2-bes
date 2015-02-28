@@ -263,6 +263,14 @@ void print_usage(void)
     printf("           -help\n");
 }
 
+/**
+ *
+ * \brief Iterates through directory.
+ *
+ * \param dir_name
+ * \param params
+ * \return void
+ */
 int do_dir(const char* dir_name, const char* const * params)
 {
 
@@ -326,6 +334,14 @@ int do_dir(const char* dir_name, const char* const * params)
 
 }
 
+/**
+ *
+ * \brief Handle the file.
+ *
+ * \param file_name
+ * \param params
+ * \return void
+ */
 int do_file(__attribute__((unused))const char* file_name,
         __attribute__((unused)) const char* const * params)
 {
@@ -335,7 +351,7 @@ int do_file(__attribute__((unused))const char* file_name,
 /**
  * \brief Initializes the program.
  *
- * \param program_name contains the program name with fully qualified path.
+ * \param program_args contains the program arguments.
  * \return EXIT_SUCCESS the program was successfully initialized, otherwise program startup failed.
  * \retval ENOMEM posix error out of memory.
  * \retval ENODATA posix error ENODATA no data available for maximum path length.
@@ -409,7 +425,7 @@ void print_error(const char* message)
  *
  * Check if the given user exist as an user or user id on the system.
  *
- *\params user_name to be queried.
+ *\param user_name to be queried.
  *\
  *\return FALSE user does not exist, TRUE user exists.
  */
@@ -502,12 +518,12 @@ FileType get_file_type_info(__attribute__((unused))const char param)
 
 
 /**
- *
- * \applies -name filter (if defined) to .
+ * \brief Filter the files due to givem parameter
+ * applies -name filter (if defined) to .
  *
  * !!!!! Five exclamation marks, the sure sign of an insane mind
  *
- * \param pointer to buffer with file stat
+ * \param params Program parameter arguments.
  * \return void
  */
 
