@@ -158,7 +158,7 @@ int main(int argc, const char* argv[])
     }
     /* get current directory */
 
-    current_dir = (char*)malloc(smax_path * sizeof(char));
+    current_dir = (char*) malloc(smax_path * sizeof(char));
     if (NULL == current_dir)
     {
         free(current_dir);
@@ -253,20 +253,23 @@ int do_dir(const char* dir_name, const char* const * params)
         /*get information about the file and catch errors*/
         if (stat(sread_path, &stbuf) == -1)
         {
-            snprintf(sprint_buffer, MAX_PRINT_BUFFER, "Can't stat file %s\n",
-                    sread_path);
+            snprintf(sprint_buffer, MAX_PRINT_BUFFER, "Can not stat file %s\n", sread_path);
             print_error(sprint_buffer);
         } else if (S_ISREG(stbuf.st_mode))
         {
-        	filter_name(&stbuf, params);
+            filter_name(&stbuf, params);
 
             /* TODO: print the file as it is wanted due to filter */
             fprintf(stdout, "File: %s\n", sread_path);
         } else if (S_ISDIR(stbuf.st_mode))
         {
+            filter_name(&stbuf, params);
+
             if ((strcmp(dirp->d_name, "..") != 0
                     && strcmp(dirp->d_name, ".") != 0))
             {
+                debug_print("Move into directory");
+
                 fprintf(stdout, "Directory: %s\n", sprint_buffer);
                 /* recursion for each directory in current directory */
                 do_dir(sread_path, params);
@@ -285,7 +288,8 @@ int do_dir(const char* dir_name, const char* const * params)
 
 }
 
-int do_file(__attribute__((unused))const char* file_name,__attribute__((unused)) const char* const * params)
+int do_file(__attribute__((unused))const char* file_name,
+        __attribute__((unused)) const char* const * params)
 {
     return EXIT_SUCCESS;
 }
@@ -362,8 +366,6 @@ void print_error(const char* message)
     fprintf(stderr, "ERROR in %s: %s\n", sprogram_arg0, message);
 }
 
-
-
 /**
  *
  * \applies -name filter (if defined) to .
@@ -374,12 +376,11 @@ void print_error(const char* message)
  * \return void
  */
 
- void filter_name(const StatType* stBuf, const char* const * params)
- {
+void filter_name(const StatType* stBuf, const char* const * params)
+{
 
-	 return;
- }
-
+    return;
+}
 
 /*
  * =================================================================== eof ==
