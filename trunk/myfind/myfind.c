@@ -134,13 +134,14 @@ void cleanup(void);
  * \param argc the number of arguments
  * \param argv the arguments itself (including the program name in argv[0])
  *
- * \return always "success"
- * \retval EXIT_SUCCESS ok
- *
+ * \return EXIT_SUCCESS on success  or Posix error number.
+ * \retval EXIT_SUCCESS Program ended successfully.
+ * \retval ENOMEM Out of memory.
  */
 int main(int argc, const char* argv[])
 {
     int result = EXIT_SUCCESS;
+    char* current_dir;
 
     /* prevent warnings regarding unused params */
     debug_print("Hello world with debug_print.\n");
@@ -153,11 +154,35 @@ int main(int argc, const char* argv[])
         cleanup();
         return result;
     }
-    /* execute program */
-    do_dir(".", argv);
+    /* get current directory */
+
+    current_dir = (char*)malloc(smax_path * sizeof(char));
+    if (NULL == current_dir)
+    {
+        free(current_dir);
+        current_dir = NULL;
+
+        cleanup();
+        return ENOMEM;
+    }
+
+    if (NULL == getcwd(current_dir, smax_path))
+    {
+        print_error("Can not determine current working directory.");
+
+        free(current_dir);
+        current_dir = NULL;
+        cleanup();
+        /* I/O error */
+        return EIO;
+    }
+    do_dir(current_dir, argv);
 
     /* cleanup */
+    free(current_dir);
+    current_dir = NULL;
     cleanup();
+
     return EXIT_SUCCESS;
 }
 
@@ -205,7 +230,8 @@ int do_dir(const char* dir_name, const char* const * params)
     struct dirent* dirp = NULL;
 
     /*open directory catch error*/
-    if (!(dirhandle = opendir(dir_name)))
+    dirhandle = opendir(dir_name);
+    if (NULL == dirhandle)
     {
         snprintf(sprint_buffer, MAX_PRINT_BUFFER, "Can not open directory %s\n",
                 dir_name);
@@ -275,7 +301,7 @@ int init(const char** program_args)
     if (NULL == sprint_buffer)
     {
         sprint_buffer = (char*) malloc(MAX_PRINT_BUFFER * sizeof(char));
-        if (NULL == sread_path)
+        if (NULL == sprint_buffer)
         {
             fprintf(stderr, "ERROR in %s: %s", sprogram_arg0,
                     "Out of memory.\n");
