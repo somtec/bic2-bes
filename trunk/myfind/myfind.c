@@ -52,7 +52,6 @@
 #define PARAM_STR_TYPE "-type"
 #define PARAM_STR_LS "-ls"
 #define PARAM_STR_PRINT "-print"
-#define PARAM_STR_HELP "-help"
 #define PARAM_STR_TYPE_VALS "bcdflps"
 
 /* Output strings if myfind fails. */
@@ -144,6 +143,8 @@ static char* sprint_buffer = NULL;
 static const int suserid_base = 10;
 /* ------------------------------------------------------------- functions --
  */
+
+
 #if DEBUG_OUTPUT
 void debug_print(const char* message);
 #else /* DEBUG_OUTPUT */
@@ -163,7 +164,40 @@ boolean has_no_user(const struct stat* file_info);
 FileType get_file_type(const struct stat* file_info);
 FileType get_file_type_info(const char param);
 
-void filter_name(const StatType* stBuf, const char* const * params);
+void filter_name(const char* path_to_find, const char* const * params);
+
+/**
+ *
+ * \brief Get maximum path length of this linux file system.
+ *
+ * \return Maximum path length.
+*/
+inline int GetMaxPathLength()
+{
+    return smax_path;
+}
+
+/**
+ *
+ * \brief Get program argument0 as string.
+ *
+ * \return Buffer for printing.
+*/
+inline const char* GetPrintBuffer()
+{
+    return sprint_buffer;
+}
+
+/**
+ *
+ * \brief Get program argument0 as string.
+ *
+ * \return Program name including path.
+*/
+inline const char* GetProgramArgument0()
+{
+    return sprogram_arg0;
+}
 
 /**
  *
@@ -183,20 +217,22 @@ int main(int argc, const char* argv[])
     int result = EXIT_SUCCESS;
     char* current_dir;
 
-    /* prevent warnings regarding unused params */
-    debug_print("Hello world with debug_print.\n");
-    printf("%d %s\n", argc, argv[0]);
-    printf("Program finished.\n");
-
     result = init(argv);
     if (EXIT_SUCCESS != result)
     {
         cleanup();
         return EXIT_FAILURE;
     }
+
+    if (argc <= 1)
+    {
+        print_usage();
+        return EXIT_SUCCESS;
+    }
+
     /* get current directory */
 
-    current_dir = (char*) malloc(smax_path * sizeof(char));
+    current_dir = (char*) malloc(GetMaxPathLength() * sizeof(char));
     if (NULL == current_dir)
     {
         free(current_dir);
@@ -206,7 +242,7 @@ int main(int argc, const char* argv[])
         return EXIT_FAILURE;
     }
 
-    if (NULL == getcwd(current_dir, smax_path))
+    if (NULL == getcwd(current_dir, GetMaxPathLength()))
     {
         print_error("Can not determine current working directory.");
 
@@ -216,7 +252,9 @@ int main(int argc, const char* argv[])
         /* I/O error */
         return EXIT_FAILURE;
     }
+
     do_dir(current_dir, argv);
+
 
     /* cleanup */
     free(current_dir);
@@ -251,16 +289,14 @@ void debug_print(const char* message)
  */
 void print_usage(void)
 {
-    /* TODO: Reinhard  instead of output "myfind" give out sprogram_arg0 with path stripped off */
-    printf("Usage: myfind <path> [arguments].\n");
+    printf("Usage: %s <directory> <test-aktion> ...\n", GetProgramArgument0());
     printf("Arguments: -user <username|userid>\n");
     printf("           -nouser\n");
-    printf("           -type <filetype>\n");
-    printf("           -path <pathpattern>\n");
-    printf("           -path <namepattern>\n");
+    printf("           -type [bcdpfls]\n");
+    printf("           -path <glob-pattern>\n");
+    printf("           -path <glob-pattern>\n");
     printf("           -print\n");
     printf("           -ls\n");
-    printf("           -help\n");
 }
 
 /**
@@ -281,9 +317,9 @@ int do_dir(const char* dir_name, const char* const * params)
     dirhandle = opendir(dir_name);
     if (NULL == dirhandle)
     {
-        snprintf(sprint_buffer, MAX_PRINT_BUFFER, "Can not open directory %s\n",
+        snprintf(GetPrintBuffer(), MAX_PRINT_BUFFER, "Can not open directory %s\n",
                 dir_name);
-        print_error(sprint_buffer);
+        print_error(GetPrintBuffer());
         return EXIT_SUCCESS;
     }
 
@@ -294,13 +330,13 @@ int do_dir(const char* dir_name, const char* const * params)
         sread_path[0] = '\0';
 
         /* build complete path to file (DIR/FILE) */
-        snprintf(sread_path, smax_path, "%s/%s", dir_name, dirp->d_name);
+        snprintf(sread_path, GetMaxPathLength(), "%s/%s", dir_name, dirp->d_name);
 
         /*get information about the file and catch errors*/
         if (stat(sread_path, &stbuf) == -1)
         {
-            snprintf(sprint_buffer, MAX_PRINT_BUFFER, "Can not read file status of file %s\n", sread_path);
-            print_error(sprint_buffer);
+            snprintf(GetPrintBuffer(), MAX_PRINT_BUFFER, "Can not read file status of file %s\n", sread_path);
+            print_error(GetPrintBuffer());
         } else if (S_ISREG(stbuf.st_mode))
         {
             filter_name(sread_path, params);
@@ -314,7 +350,7 @@ int do_dir(const char* dir_name, const char* const * params)
             {
                 debug_print("Move into directory");
 
-                fprintf(stdout, "Directory: %s\n", sprint_buffer);
+                fprintf(stdout, "Directory: %s\n", GetPrintBuffer());
                 /* recursion for each directory in current directory */
                 do_dir(sread_path, params);
             }
@@ -323,9 +359,9 @@ int do_dir(const char* dir_name, const char* const * params)
 
     if (closedir(dirhandle) < 0)
     {
-        snprintf(sprint_buffer, MAX_PRINT_BUFFER,
+        snprintf(GetPrintBuffer(), MAX_PRINT_BUFFER,
                 "Can not close directory %s\n", dir_name);
-        print_error(sprint_buffer);
+        print_error(GetPrintBuffer());
     }
 
     return EXIT_SUCCESS;
@@ -415,7 +451,7 @@ void cleanup(void)
  */
 void print_error(const char* message)
 {
-    fprintf(stderr, "ERROR in %s: %s\n", sprogram_arg0, message);
+    fprintf(stderr, "%s: %s\n", sprogram_arg0, message);
 }
 
 /**
