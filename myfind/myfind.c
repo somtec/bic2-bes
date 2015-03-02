@@ -163,7 +163,7 @@ boolean has_no_user(const struct stat* file_info);
 FileType get_file_type(const struct stat* file_info);
 FileType get_file_type_info(const char param);
 
-void filter_name(const char* pathname, const char* const * params);
+void filter_name(const StatType* stBuf, const char* const * params);
 
 /**
  *
@@ -192,7 +192,7 @@ int main(int argc, const char* argv[])
     if (EXIT_SUCCESS != result)
     {
         cleanup();
-        return result;
+        return EXIT_FAILURE;
     }
     /* get current directory */
 
@@ -203,7 +203,7 @@ int main(int argc, const char* argv[])
         current_dir = NULL;
 
         cleanup();
-        return ENOMEM;
+        return EXIT_FAILURE;
     }
 
     if (NULL == getcwd(current_dir, smax_path))
@@ -214,7 +214,7 @@ int main(int argc, const char* argv[])
         current_dir = NULL;
         cleanup();
         /* I/O error */
-        return EIO;
+        return EXIT_FAILURE;
     }
     do_dir(current_dir, argv);
 
@@ -304,13 +304,11 @@ int do_dir(const char* dir_name, const char* const * params)
         } else if (S_ISREG(stbuf.st_mode))
         {
             filter_name(sread_path, params);
-
             /* TODO: print the file as it is wanted due to filter */
             fprintf(stdout, "File: %s\n", sread_path);
         } else if (S_ISDIR(stbuf.st_mode))
         {
             filter_name((const char *) sread_path, params);
-
             if ((strcmp(dirp->d_name, "..") != 0
                     && strcmp(dirp->d_name, ".") != 0))
             {
@@ -548,6 +546,7 @@ void filter_name(const char* path_to_find, const char* const * params)
 	}
 
     return;
+
 }
 
 /*
