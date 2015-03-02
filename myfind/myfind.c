@@ -163,6 +163,7 @@ boolean user_exist(const char* user_name);
 boolean has_no_user(const struct stat* file_info);
 FileType get_file_type(const struct stat* file_info);
 FileType get_file_type_info(const char param);
+void change_time(const struct stat* file_info);
 
 void filter_name(const char* path_to_find, const char* const * params);
 
@@ -583,6 +584,22 @@ void filter_name(const char* path_to_find, const char* const * params)
 
     return;
 
+}
+/**
+ * \brief Letzte Änderung der Datei auf die Standardausgabe schreiben
+ *
+ * \param file_info Struktur mit den Attributen der Datei
+ *
+ * \return none
+ * \retval none
+ **/
+void change_time(const struct stat* file_info)
+{
+	char time_string[100] = "\0";	/* String für die formatierte Zeit */
+
+	/*********** Zeit wird auf aktuelle Zeitzone umgerechnet und passend formatiert ausgegeben  **********************/
+	strftime(time_string,100,"%b %d %H:%M", localtime(&file_info->st_mtime));
+	fprintf(stdout, "%s", time_string);
 }
 
 /*
