@@ -35,7 +35,6 @@
 #include <time.h>
 #include <fnmatch.h>
 #include <unistd.h>
-
 #include <limits.h>
 
 /*
@@ -91,7 +90,7 @@ typedef enum FileTypeEnum
     FILE_TYPE_CHAR,
     /** File type directory. */
     FILE_TYPE_DIRECTORY,
-    /** File type pipe e. g. fifo. */
+    /** File type pipe e. g. FIFO. */
     FILE_TYPE_PIPE,
     /** File type regular file. */
     FILE_TYPE_FILE,
@@ -100,6 +99,7 @@ typedef enum FileTypeEnum
     /** File type socket e. g. stream for communication. */
     FILE_TYPE_SOCKET
 } FileType;
+
 /**
  * The struct type for stat return value.
  */
@@ -125,7 +125,7 @@ typedef enum booleanEnum
  */
 
 /** Buffer for reading current directory/file. */
-static char* sread_path = NULL;
+static char* spath_buffer = NULL;
 
 /** Maximum path length of file system */
 static long int smax_path = 0;
@@ -140,10 +140,10 @@ static const long MAX_PRINT_BUFFER = 1000;
 static char* sprint_buffer = NULL;
 
 /** Want to convert user id number into decimal number. */
-static const int suserid_base = 10;
+static const int USERID_BASE = 10;
+
 /* ------------------------------------------------------------- functions --
  */
-
 
 #if DEBUG_OUTPUT
 void debug_print(const char* message);
@@ -152,6 +152,11 @@ void debug_print(const char* message);
 void debug_print(__attribute((unused))const char* message)
 {}
 #endif /* DEBUG_OUTPUT */
+
+inline static int get_max_path_length(void);
+inline static char* get_print_buffer(void);
+inline static const char* get_program_argument_0(void);
+inline static char* get_path_buffer(void);
 
 void print_usage(void);
 int do_file(const char* file_name, const char* const * params);
@@ -164,41 +169,7 @@ boolean has_no_user(const struct stat* file_info);
 FileType get_file_type(const struct stat* file_info);
 FileType get_file_type_info(const char param);
 void change_time(const struct stat* file_info);
-
 void filter_name(const char* path_to_find, const char* const * params);
-
-/**
- *
- * \brief Get maximum path length of this linux file system.
- *
- * \return Maximum path length.
-*/
-inline int GetMaxPathLength()
-{
-    return smax_path;
-}
-
-/**
- *
- * \brief Get program argument0 as string.
- *
- * \return Buffer for printing.
-*/
-inline const char* GetPrintBuffer()
-{
-    return sprint_buffer;
-}
-
-/**
- *
- * \brief Get program argument0 as string.
- *
- * \return Program name including path.
-*/
-inline const char* GetProgramArgument0()
-{
-    return sprogram_arg0;
-}
 
 /**
  *
@@ -209,14 +180,16 @@ inline const char* GetProgramArgument0()
  * \param argc the number of arguments
  * \param argv the arguments itself (including the program name in argv[0])
  *
- * \return EXIT_SUCCESS on success  or Posix error number.
+ * \return EXIT_SUCCESS on success  EXIT_FAILURE on error.
  * \retval EXIT_SUCCESS Program ended successfully.
- * \retval ENOMEM Out of memory.
+ * \retval EXIT_FAILURE Program ended with failure.
  */
 int main(int argc, const char* argv[])
 {
     int result = EXIT_SUCCESS;
-    char* current_dir;
+    char* start_dir = NULL;
+    char* found_dir = NULL;
+    StatType stbuf;
 
     result = init(argv);
     if (EXIT_SUCCESS != result)
@@ -231,35 +204,52 @@ int main(int argc, const char* argv[])
         return EXIT_SUCCESS;
     }
 
+    get_path_buffer()[0] = '\0';
+    start_dir = (char*) malloc(get_max_path_length() * sizeof(char));
+    if (NULL == start_dir)
+    {
+        free(start_dir);
+        start_dir = NULL;
+        print_error("Out of memory.\n");
+        cleanup();
+        return EXIT_FAILURE;
+    }
+
+    /* build complete path to file (DIR/FILE) */
+    snprintf(get_path_buffer(), get_max_path_length(), "%s", argv[1]);
+
+    /*get information about the file and catch errors*/
+    if (stat(get_path_buffer(), &stbuf) == -1)
+    {
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                "Can not read file status of file %s\n", get_path_buffer());
+        print_error(get_print_buffer());
+    }
+    else if (S_ISDIR(stbuf.st_mode))
+    {
+        found_dir = get_path_buffer();
+        start_dir = found_dir;
+    }
+
     /* get current directory */
-
-    current_dir = (char*) malloc(GetMaxPathLength() * sizeof(char));
-    if (NULL == current_dir)
+    if (NULL == found_dir)
     {
-        free(current_dir);
-        current_dir = NULL;
+        if (NULL == getcwd(start_dir, get_max_path_length()))
+        {
+            print_error("Can not determine current working directory.");
 
-        cleanup();
-        return EXIT_FAILURE;
+            free(start_dir);
+            start_dir = NULL;
+            cleanup();
+            /* I/O error */
+            return EXIT_FAILURE;
+        }
     }
-
-    if (NULL == getcwd(current_dir, GetMaxPathLength()))
-    {
-        print_error("Can not determine current working directory.");
-
-        free(current_dir);
-        current_dir = NULL;
-        cleanup();
-        /* I/O error */
-        return EXIT_FAILURE;
-    }
-
-    do_dir(current_dir, argv);
-
+    do_dir(start_dir, argv);
 
     /* cleanup */
-    free(current_dir);
-    current_dir = NULL;
+    free(start_dir);
+    start_dir = NULL;
     cleanup();
 
     return EXIT_SUCCESS;
@@ -273,7 +263,7 @@ int main(int argc, const char* argv[])
  * Does not append \n to message output.
  *
  * \param message output on stdout.
- * \retval void
+ * \return void
  *
  */
 void debug_print(const char* message)
@@ -284,13 +274,58 @@ void debug_print(const char* message)
 
 /**
  *
+ * \brief Get maximum path length of this Linux file system.
+ *
+ * \return Maximum path length.
+ */
+inline static int get_max_path_length(void)
+{
+    return smax_path;
+}
+
+/**
+ *
+ * \brief Get program argument0 as string.
+ *
+ * \return Buffer for printing.
+ */
+inline char* get_print_buffer(void)
+{
+    return sprint_buffer;
+}
+
+/**
+ *
+ * \brief Get program argument0 as string.
+ *
+ * \return Program name including path.
+ */
+inline const char* get_program_argument_0(void)
+{
+    return sprogram_arg0;
+}
+
+/**
+ *
+ * \brief Get buffer for retrieving the path/directory information.
+ *
+ * \return Buffer for printing.
+ */
+inline char* get_path_buffer(void)
+{
+    return spath_buffer;
+}
+
+/**
+ *
  * \brief Print the help.
  *
  * \return void
  */
 void print_usage(void)
 {
-    printf("Usage: %s <directory> <test-aktion> ...\n", GetProgramArgument0());
+    printf("Usage: %s <directory> <test-aktion> ...\n",
+            get_program_argument_0());
     printf("Arguments: -user <username|userid>\n");
     printf("           -nouser\n");
     printf("           -type [bcdpfls]\n");
@@ -318,9 +353,9 @@ int do_dir(const char* dir_name, const char* const * params)
     dirhandle = opendir(dir_name);
     if (NULL == dirhandle)
     {
-        snprintf(GetPrintBuffer(), MAX_PRINT_BUFFER, "Can not open directory %s\n",
-                dir_name);
-        print_error(GetPrintBuffer());
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                "Can not open directory %s\n", dir_name);
+        print_error(get_print_buffer());
         return EXIT_SUCCESS;
     }
 
@@ -328,41 +363,47 @@ int do_dir(const char* dir_name, const char* const * params)
     {
         /*fetch each file from directory, until pointer is NULL*/
         StatType stbuf;
-        sread_path[0] = '\0';
+        get_path_buffer()[0] = '\0';
 
         /* build complete path to file (DIR/FILE) */
-        snprintf(sread_path, GetMaxPathLength(), "%s/%s", dir_name, dirp->d_name);
+        snprintf(get_path_buffer(), get_max_path_length(), "%s/%s", dir_name,
+                dirp->d_name);
 
         /*get information about the file and catch errors*/
-        if (stat(sread_path, &stbuf) == -1)
+        if (stat(get_path_buffer(), &stbuf) == -1)
         {
-            snprintf(GetPrintBuffer(), MAX_PRINT_BUFFER, "Can not read file status of file %s\n", sread_path);
-            print_error(GetPrintBuffer());
-        } else if (S_ISREG(stbuf.st_mode))
+            snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                    "Can not read file status of file %s\n", get_path_buffer());
+            print_error(get_print_buffer());
+        }
+        else if (S_ISDIR(stbuf.st_mode))
         {
-            filter_name(sread_path, params);
-            /* TODO: print the file as it is wanted due to filter */
-            fprintf(stdout, "File: %s\n", sread_path);
-        } else if (S_ISDIR(stbuf.st_mode))
-        {
-            filter_name((const char *) sread_path, params);
+            filter_name((const char *) get_path_buffer(), params);
             if ((strcmp(dirp->d_name, "..") != 0
                     && strcmp(dirp->d_name, ".") != 0))
             {
-                debug_print("Move into directory");
-
-                fprintf(stdout, "Directory: %s\n", GetPrintBuffer());
+#if DEBUG_OUTPUT
+                snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                        "Move into directory %s.\n", dirp->d_name);
+#endif /* DEBUG_OUTPUT */
+                debug_print(get_print_buffer());
                 /* recursion for each directory in current directory */
-                do_dir(sread_path, params);
+                do_dir(get_path_buffer(), params);
             }
+        }
+        else
+        {
+            filter_name(get_path_buffer(), params);
+            /* TODO: print the file as it is wanted due to filter */
+            fprintf(stdout, "File: %s\n", get_path_buffer());
         }
     }
 
     if (closedir(dirhandle) < 0)
     {
-        snprintf(GetPrintBuffer(), MAX_PRINT_BUFFER,
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
                 "Can not close directory %s\n", dir_name);
-        print_error(GetPrintBuffer());
+        print_error(get_print_buffer());
     }
 
     return EXIT_SUCCESS;
@@ -400,13 +441,12 @@ int init(const char** program_args)
         sprint_buffer = (char*) malloc(MAX_PRINT_BUFFER * sizeof(char));
         if (NULL == sprint_buffer)
         {
-            fprintf(stderr, "ERROR in %s: %s", sprogram_arg0,
-                    "Out of memory.\n");
+            fprintf(stderr, "%s: %s\n", sprogram_arg0, "Out of memory.\n");
             return ENOMEM;
         }
     }
 
-    if (NULL == sread_path)
+    if (NULL == spath_buffer)
     {
         /* get maximum directory size */
         smax_path = pathconf(".", _PC_PATH_MAX);
@@ -415,8 +455,8 @@ int init(const char** program_args)
             print_error("Maximum path length can not be determined.\n");
             return ENODATA;
         }
-        sread_path = (char*) malloc(smax_path * sizeof(char));
-        if (NULL == sread_path)
+        spath_buffer = (char*) malloc(smax_path * sizeof(char));
+        if (NULL == spath_buffer)
         {
             print_error("Out of memory.\n");
             return ENOMEM;
@@ -434,8 +474,8 @@ int init(const char** program_args)
  */
 void cleanup(void)
 {
-    free(sread_path);
-    sread_path = NULL;
+    free(spath_buffer);
+    spath_buffer = NULL;
     free(sprint_buffer);
     sprint_buffer = NULL;
 
@@ -452,7 +492,7 @@ void cleanup(void)
  */
 void print_error(const char* message)
 {
-    fprintf(stderr, "%s: %s\n", sprogram_arg0, message);
+    fprintf(stderr, "%s: %s\n", get_program_argument_0(), message);
 }
 
 /**
@@ -478,7 +518,7 @@ boolean user_exist(const char* user_name)
     }
 
     /* is it a user id instead of a user name? */
-    uid = (uid_t)strtol(user_name, &end_userid, suserid_base);
+    uid = (uid_t) strtol(user_name, &end_userid, USERID_BASE);
     if (0 == uid)
     {
         return FALSE;
@@ -487,7 +527,7 @@ boolean user_exist(const char* user_name)
     pwd = getpwuid(uid);
     if (NULL == pwd)
     {
-         return FALSE;
+        return FALSE;
     }
 
     return TRUE;
@@ -505,6 +545,10 @@ boolean has_no_user(const struct stat* file_info)
 
 /**
  * \brief Query file type of given file.
+ *
+ * \param File info as from file system.
+ *
+ * \return The file type enumerator.
  */
 FileType get_file_type(const struct stat* file_info)
 {
@@ -515,91 +559,125 @@ FileType get_file_type(const struct stat* file_info)
     {
         result = FILE_TYPE_BLOCK;
     }
-#if 0
     else if (S_ISREG(file_info->st_mode))
     {
-
+        result = FILE_TYPE_FILE;
     }
-    else if (S_ISREG(file_info->st_mode))
+    else if (S_ISCHR(file_info->st_mode))
     {
-
+        result = FILE_TYPE_CHAR;
     }
-
-
-    FILE_TYPE_CHAR,
-    /** File type directory. */
-    FILE_TYPE_DIRECTORY,
-    /** File type pipe e. g. fifo. */
-    FILE_TYPE_PIPE,
-    /** File type regular file. */
-    FILE_TYPE_FILE,
-    /** File type link e. g. symbolic link. */
-    FILE_TYPE_LINK,
-    /** File type socket e. g. stream for communication. */
-    FILE_TYPE_SOCKET
-
-#endif /* 0 */
+    else if (S_ISDIR(file_info->st_mode))
+    {
+        result = FILE_TYPE_DIRECTORY;
+    }
+    else if (S_ISFIFO(file_info->st_mode))
+    {
+        result = FILE_TYPE_PIPE;
+    }
+    else if (S_ISLNK(file_info->st_mode))
+    {
+        result = FILE_TYPE_LINK;
+    }
+    else if (S_ISSOCK(file_info->st_mode))
+    {
+        result = FILE_TYPE_SOCKET;
+    }
     return result;
-
 
 }
 
-FileType get_file_type_info(__attribute__((unused))const char param)
+/**
+ * \brief Query file type of given character.
+ *
+ * \param Character identifier of file type.
+ *
+ * \return The file type enumerator.
+ */
+FileType get_file_type_info(const char param)
 {
 
     FileType result = FILE_TYPE_UNKNOWN;
+
+    switch (param)
+    {
+    case 'b':
+        result = FILE_TYPE_BLOCK;
+        break;
+    case 'c':
+        result = FILE_TYPE_CHAR;
+        break;
+    case 'd':
+        result = FILE_TYPE_DIRECTORY;
+        break;
+    case 'p':
+        result = FILE_TYPE_PIPE;
+        break;
+    case 'f':
+        result = FILE_TYPE_FILE;
+        break;
+    case 'l':
+        result = FILE_TYPE_LINK;
+        break;
+    case 's':
+        result = FILE_TYPE_SOCKET;
+        break;
+    default:
+        result = FILE_TYPE_UNKNOWN;
+        break;
+    }
+
     return result;
 }
 
-
 /**
- * \brief Filter the files due to givem parameter
- * applies -name filter (if defined) to .
+ * \brief Filter the files due to given parameter.
  *
- * !!!!! Five exclamation marks, the sure sign of an insane mind
+ * applies -name filter (if defined) to.
  *
- * \param params Program parameter arguments.
+ * \param path_to_find determine where to start the search.
+ * \param params Program parameter arguments given by user.
  * \return void
  */
-
 void filter_name(const char* path_to_find, const char* const * params)
 {
-	 int i = 1;
-	 while (params[i]!= NULL) {
-		 printf("examing option %s\n",params[i]);
-		 if(strcmp(params[i], PARAM_STR_NAME) == 0)
-		 {
-			 printf("physical path: %s\n", path_to_find);
-			 printf("to compare: %s\n", params[i+1]);
+    int i = 1;
+    while (params[i] != NULL)
+    {
+        printf("examining option %s\n", params[i]);
+        if (strcmp(params[i], PARAM_STR_NAME) == 0)
+        {
+            printf("physical path: %s\n", path_to_find);
+            printf("to compare: %s\n", params[i + 1]);
 
-			 if(fnmatch(path_to_find, params[i+1], FNM_PATHNAME)== 0) {
-				 printf("%s mathches %s\n", params[i+1],path_to_find);
-			 }
-			 else {
-				 printf("%s NOT MATCHES %s\n", params[i+1],path_to_find);
-			 }
-		 }
-		 i++;
-	}
+            if (fnmatch(path_to_find, params[i + 1], FNM_PATHNAME) == 0)
+            {
+                printf("%s matches %s\n", params[i + 1], path_to_find);
+            }
+            else
+            {
+                printf("%s NOT MATCHES %s\n", params[i + 1], path_to_find);
+            }
+        }
+        i++;
+    }
 
     return;
 
 }
 /**
- * \brief Letzte Änderung der Datei auf die Standardausgabe schreiben
+ * \brief Print out last changed date of file.
  *
- * \param file_info Struktur mit den Attributen der Datei
+ * \param file_info with the file attributes.
  *
  * \return none
- * \retval none
  **/
 void change_time(const struct stat* file_info)
 {
-	char time_string[100] = "\0";	/* String für die formatierte Zeit */
-
-	/*********** Zeit wird auf aktuelle Zeitzone umgerechnet und passend formatiert ausgegeben  **********************/
-	strftime(time_string,100,"%b %d %H:%M", localtime(&file_info->st_mtime));
-	fprintf(stdout, "%s", time_string);
+    /* Convert the time into the local time format it. */
+    strftime(get_print_buffer(), MAX_PRINT_BUFFER - 1, "%b %d %H:%M",
+            localtime(&file_info->st_mtime));
+    fprintf(stdout, "%s", get_print_buffer());
 }
 
 /*
