@@ -163,7 +163,7 @@ boolean has_no_user(const struct stat* file_info);
 FileType get_file_type(const struct stat* file_info);
 FileType get_file_type_info(const char param);
 
-void filter_name(const StatType* stBuf, const char* const * params);
+void filter_name(const char* pathname, const char* const * params);
 
 /**
  *
@@ -303,13 +303,13 @@ int do_dir(const char* dir_name, const char* const * params)
             print_error(sprint_buffer);
         } else if (S_ISREG(stbuf.st_mode))
         {
-            filter_name(&stbuf, params);
+            filter_name(sread_path, params);
 
             /* TODO: print the file as it is wanted due to filter */
             fprintf(stdout, "File: %s\n", sread_path);
         } else if (S_ISDIR(stbuf.st_mode))
         {
-            filter_name(&stbuf, params);
+            filter_name((const char *) sread_path, params);
 
             if ((strcmp(dirp->d_name, "..") != 0
                     && strcmp(dirp->d_name, ".") != 0))
@@ -527,8 +527,25 @@ FileType get_file_type_info(__attribute__((unused))const char param)
  * \return void
  */
 
-void filter_name(const StatType* stBuf, const char* const * params)
+void filter_name(const char* path_to_find, const char* const * params)
 {
+	 int i = 1;
+	 while (params[i]!= NULL) {
+		 printf("examing option %s\n",params[i]);
+		 if(strcmp(params[i], PARAM_STR_NAME) == 0)
+		 {
+			 printf("physical path: %s\n", path_to_find);
+			 printf("to compare: %s\n", params[i+1]);
+
+			 if(fnmatch(path_to_find, params[i+1], FNM_PATHNAME)== 0) {
+				 printf("%s mathches %s\n", params[i+1],path_to_find);
+			 }
+			 else {
+				 printf("%s NOT MATCHES %s\n", params[i+1],path_to_find);
+			 }
+		 }
+		 i++;
+	}
 
     return;
 }
