@@ -159,9 +159,11 @@ inline static const char* get_program_argument_0(void);
 inline static char* get_path_buffer(void);
 
 void print_usage(void);
+int get_current_dir(char current_dir[]);
 int do_file(const char* file_name, const char* const * params);
 int do_dir(const char* dir_name, const char* const * params);
 void print_error(const char* message);
+void print_result(const char* file_path);
 int init(const char** program_args);
 void cleanup(void);
 boolean user_exist(const char* user_name);
@@ -169,7 +171,7 @@ boolean has_no_user(const struct stat* file_info);
 FileType get_file_type(const struct stat* file_info);
 FileType get_file_type_info(const char param);
 void change_time(const struct stat* file_info);
-void filter_name(const char* path_to_find, const char* const * params);
+void filter_name(const char* path_to_examine, const char* const * params);
 
 /**
  *
@@ -639,30 +641,55 @@ FileType get_file_type_info(const char param)
  * \param params Program parameter arguments given by user.
  * \return void
  */
-void filter_name(const char* path_to_find, const char* const * params)
+
+void filter_name(const char* path_to_examine, const char* const * params)
 {
-    int i = 1;
-    while (params[i] != NULL)
-    {
-        printf("examining option %s\n", params[i]);
-        if (strcmp(params[i], PARAM_STR_NAME) == 0)
-        {
-            printf("physical path: %s\n", path_to_find);
-            printf("to compare: %s\n", params[i + 1]);
+	 int i = 1;
+	 while (params[i]!= NULL) {
+		 /* If we find a -name Parameter */
+		 if(strcmp(params[i], PARAM_STR_NAME) == 0)
+		 {
+			 /**
+			  *  We match the actual filepath against the pattern
+			  *  delivered as argument to -name
+			  */
 
-            if (fnmatch(path_to_find, params[i + 1], FNM_PATHNAME) == 0)
-            {
-                printf("%s matches %s\n", params[i + 1], path_to_find);
-            }
-            else
-            {
-                printf("%s NOT MATCHES %s\n", params[i + 1], path_to_find);
-            }
-        }
-        i++;
-    }
-
+			 if(fnmatch(params[i+1], path_to_examine, 0)== 0) {
+				 /* We have a pattern match! */
+				 print_result(path_to_examine);
+			 }
+			 else {
+				 /* no match */
+			 }
+		 }
+		 i++;
+	}
     return;
+}
+
+/**
+ * \brief outputs matching result
+ *
+ * \param file_path matching file_path.
+ * \return void
+ */
+
+void print_result(const char* file_path){
+	char * current_dir = NULL;
+	int i = 0;
+	i=get_current_dir(current_dir);
+	printf("i wanna cut %d  %s\n",i,file_path);
+
+	free(current_dir);
+	return ;
+}
+
+int get_current_dir(char current_dir[]) {
+	char cwd[1024];
+	if (getcwd(cwd, sizeof(cwd)) != NULL)
+		fprintf(stdout, "Current working dir: %s\n", cwd);
+	current_dir=cwd;
+	return strlen(current_dir);
 
 }
 /**
