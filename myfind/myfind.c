@@ -172,6 +172,8 @@ FileType get_file_type(const struct stat* file_info);
 FileType get_file_type_info(const char param);
 void change_time(const struct stat* file_info);
 void filter_name(const char* path_to_examine, const char* const * params);
+void filter_path(const char* path_to_examine, const char* const * params);
+
 
 /**
  *
@@ -381,6 +383,8 @@ int do_dir(const char* dir_name, const char* const * params)
         else if (S_ISDIR(stbuf.st_mode))
         {
             filter_name((const char *) get_path_buffer(), params);
+            filter_path((const char *) get_path_buffer(), params);
+
             if ((strcmp(dirp->d_name, "..") != 0
                     && strcmp(dirp->d_name, ".") != 0))
             {
@@ -396,6 +400,7 @@ int do_dir(const char* dir_name, const char* const * params)
         else
         {
             filter_name(get_path_buffer(), params);
+            filter_path(get_path_buffer(), params);
             /* TODO: print the file as it is wanted due to filter */
             fprintf(stdout, "File: %s\n", get_path_buffer());
         }
@@ -633,11 +638,11 @@ FileType get_file_type_info(const char param)
 }
 
 /**
- * \brief Filter the files due to given parameter.
+ * \brief Filters the direntry due to -name  parameter.
  *
  * applies -name filter (if defined) to.
  *
- * \param path_to_find determine where to start the search.
+ * \param path_to_examine direntry to investigate for name.
  * \param params Program parameter arguments given by user.
  * \return void
  */
@@ -655,6 +660,38 @@ void filter_name(const char* path_to_examine, const char* const * params)
              */
 
             if(fnmatch(params[i+1], path_to_examine, 0)== 0) {
+                /* We have a pattern match! */
+                print_result(path_to_examine);
+            }
+            else {
+                /* no match */
+            }
+        }
+        i++;
+    }
+    return;
+}
+
+/**
+ * \brief Filters the direntry due to -path parameter.
+ *
+ * applies -name filter (if defined) to.
+ *
+ * \param path_to_examine direntry to investigate for path.
+ * \param params Program parameter arguments given by user.
+ * \return void
+ */
+void filter_path(const char* path_to_examine, const char* const * params){
+    int i = 1;
+    while (params[i]!= NULL) {
+        /* If we find a -name Parameter */
+        if(strcmp(params[i], PARAM_STR_PATH) == 0)
+        {
+            /**
+             *  We match the actual filepath against the pattern
+             *  delivered as argument to -name
+             */
+            if(fnmatch(params[i+1], path_to_examine, FNM_PATHNAME)== 0) {
                 /* We have a pattern match! */
                 print_result(path_to_examine);
             }
