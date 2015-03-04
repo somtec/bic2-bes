@@ -36,6 +36,8 @@
 #include <fnmatch.h>
 #include <unistd.h>
 #include <limits.h>
+#include <libgen.h>
+
 
 /*
  * --------------------------------------------------------------- defines --
@@ -171,8 +173,8 @@ boolean has_no_user(const struct stat* file_info);
 FileType get_file_type(const struct stat* file_info);
 FileType get_file_type_info(const char param);
 void change_time(const struct stat* file_info);
-void filter_name(const char* path_to_examine, const char* const * params);
-void filter_path(const char* path_to_examine, const char* const * params);
+void filter_name(char* path_to_examine, const char* const * params);
+void filter_path(char* path_to_examine, const char* const * params);
 
 
 /**
@@ -382,8 +384,8 @@ int do_dir(const char* dir_name, const char* const * params)
         }
         else if (S_ISDIR(stbuf.st_mode))
         {
-            filter_name((const char *) get_path_buffer(), params);
-            filter_path((const char *) get_path_buffer(), params);
+            filter_name(get_path_buffer(), params);
+            filter_path(get_path_buffer(), params);
 
             if ((strcmp(dirp->d_name, "..") != 0
                     && strcmp(dirp->d_name, ".") != 0))
@@ -647,7 +649,7 @@ FileType get_file_type_info(const char param)
  * \return void
  */
 
-void filter_name(const char* path_to_examine, const char* const * params)
+void filter_name(char* path_to_examine, const char* const * params)
 {
     int i = 1;
     while (params[i]!= NULL) {
@@ -659,7 +661,7 @@ void filter_name(const char* path_to_examine, const char* const * params)
              *  delivered as argument to -name
              */
 
-            if(fnmatch(params[i+1], path_to_examine, 0)== 0) {
+            if(fnmatch(params[i+1], basename(path_to_examine), 0)== 0) {
                 /* We have a pattern match! */
                 print_result(path_to_examine);
             }
@@ -681,7 +683,7 @@ void filter_name(const char* path_to_examine, const char* const * params)
  * \param params Program parameter arguments given by user.
  * \return void
  */
-void filter_path(const char* path_to_examine, const char* const * params){
+void filter_path(char* path_to_examine, const char* const * params){
     int i = 1;
     while (params[i]!= NULL) {
         /* If we find a -name Parameter */
@@ -691,7 +693,7 @@ void filter_path(const char* path_to_examine, const char* const * params){
              *  We match the actual filepath against the pattern
              *  delivered as argument to -name
              */
-            if(fnmatch(params[i+1], path_to_examine, FNM_PATHNAME)== 0) {
+            if(fnmatch(params[i+1], basename(path_to_examine), FNM_PATHNAME)== 0) {
                 /* We have a pattern match! */
                 print_result(path_to_examine);
             }
