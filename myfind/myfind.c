@@ -644,26 +644,26 @@ FileType get_file_type_info(const char param)
 
 void filter_name(const char* path_to_examine, const char* const * params)
 {
-	 int i = 1;
-	 while (params[i]!= NULL) {
-		 /* If we find a -name Parameter */
-		 if(strcmp(params[i], PARAM_STR_NAME) == 0)
-		 {
-			 /**
-			  *  We match the actual filepath against the pattern
-			  *  delivered as argument to -name
-			  */
+    int i = 1;
+    while (params[i]!= NULL) {
+        /* If we find a -name Parameter */
+        if(strcmp(params[i], PARAM_STR_NAME) == 0)
+        {
+            /**
+             *  We match the actual filepath against the pattern
+             *  delivered as argument to -name
+             */
 
-			 if(fnmatch(params[i+1], path_to_examine, 0)== 0) {
-				 /* We have a pattern match! */
-				 print_result(path_to_examine);
-			 }
-			 else {
-				 /* no match */
-			 }
-		 }
-		 i++;
-	}
+            if(fnmatch(params[i+1], path_to_examine, 0)== 0) {
+                /* We have a pattern match! */
+                print_result(path_to_examine);
+            }
+            else {
+                /* no match */
+            }
+        }
+        i++;
+    }
     return;
 }
 
@@ -675,23 +675,52 @@ void filter_name(const char* path_to_examine, const char* const * params)
  */
 
 void print_result(const char* file_path){
-	char * current_dir = NULL;
-	int i = 0;
-	i=get_current_dir(current_dir);
-	printf("i wanna cut %d  %s\n",i,file_path);
-
-	free(current_dir);
-	return ;
+    char * current_dir = NULL;
+    int length = 0;
+    length=get_current_dir(current_dir);
+    if(length) {
+        /* working path and file_path begin with same part */
+        printf(".%s\n",file_path+length*sizeof(char));
+    }
+    else {
+    /* working path and file_pat have no common part */
+        printf("%s\n",file_path);
+    }
+    free(current_dir);
+    return ;
 }
 
-int get_current_dir(char current_dir[]) {
-	char cwd[1024];
-	if (getcwd(cwd, sizeof(cwd)) != NULL)
-		fprintf(stdout, "Current working dir: %s\n", cwd);
-	current_dir=cwd;
-	return strlen(current_dir);
+/**
+ * \brief returns length and name of current dir
+ *
+ * \param buffer_dirname character pointer to string buffer for path or NULL
+ *        if buffer_dirname is NULL a buffer will be created and returned in buffer_dirname
+ * \return int length of dir in buffer or 0 in case of failure
+ */
 
+int get_current_dir(char * buffer_dirname) {
+    int need_buffer;
+    int buffer_length;
+    need_buffer = (buffer_dirname == NULL);
+    if(need_buffer) {
+        buffer_length = get_max_path_length() * sizeof(char);
+        buffer_dirname = (char*) malloc(buffer_length);
+    }
+    if (NULL == buffer_dirname)
+    {
+        if(need_buffer) free(buffer_dirname);
+        buffer_dirname = NULL;
+        print_error("could not allocate memory.\n");
+        return 0;
+    }
+    if (getcwd(buffer_dirname, buffer_length) == NULL) {
+        if(need_buffer) free(buffer_dirname);
+        buffer_dirname = NULL;
+        return 0;
+    }
+    return strlen(buffer_dirname);
 }
+
 /**
  * \brief Print out last changed date of file.
  *
