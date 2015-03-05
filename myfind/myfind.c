@@ -175,6 +175,7 @@ FileType get_file_type_info(const char param);
 void change_time(const struct stat* file_info);
 void filter_name(char* path_to_examine, const char* const * params);
 void filter_path(char* path_to_examine, const char* const * params);
+void file_permissions(const struct stat* file_info);
 
 
 /**
@@ -555,7 +556,7 @@ boolean has_no_user(const struct stat* file_info)
 /**
  * \brief Query file type of given file.
  *
- * \param File info as from file system.
+ * \param file_info as from file system.
  *
  * \return The file type enumerator.
  */
@@ -599,7 +600,7 @@ FileType get_file_type(const struct stat* file_info)
 /**
  * \brief Query file type of given character.
  *
- * \param Character identifier of file type.
+ * \param param identifier of file type.
  *
  * \return The file type enumerator.
  */
@@ -781,6 +782,102 @@ void change_time(const struct stat* file_info)
     fprintf(stdout, "%s", get_print_buffer());
 }
 
+/**
+ * \brief Die Berechtigungen auf die Standardausgabe schreiben
+ *
+ * \param file_info Struktur mit den Attributen der Datei
+ *
+ * \return none
+ * \retval none
+ **/
+void file_permissions(const struct stat* file_info)
+{
+    /*********** Print file type **********************/
+    fprintf(stdout,"%c",get_file_type(file_info));
+
+    /*********** Print user permissions **********************/
+    fprintf(stdout,"%c",(file_info->st_mode & S_IRUSR ? 'r' : '-'));
+    fprintf(stdout,"%c",(file_info->st_mode & S_IWUSR ? 'w' : '-'));
+    if (!(file_info->st_mode & S_ISUID))										/*no UID-Bit */
+    {
+        fprintf(stdout,"%c",(file_info->st_mode & S_IXUSR ? 'x' : '-'));
+    }
+    else if ((file_info->st_mode & S_ISUID) && (file_info->st_mode & S_IXUSR))		/*UID-Bit && Execute-Bit*/
+    {
+        fprintf(stdout,"%c",(file_info->st_mode & S_ISUID ? 's' : '-'));
+    }
+    else																		/*UID-Bit && !Execute-Bit*/
+    {
+		fprintf(stdout,"%c",(file_info->st_mode & S_ISUID ? 'S' : '-'));
+	}
+
+	/*********** Print group permissions **********************/
+    fprintf(stdout,"%c",(file_info->st_mode & S_IRGRP ? 'r' : '-'));
+    fprintf(stdout,"%c",(file_info->st_mode & S_IWGRP ? 'w' : '-'));
+    if (!(file_info->st_mode & S_ISGID))										/*no GID-Bit */
+    {
+		fprintf(stdout,"%c",(file_info->st_mode & S_IXGRP ? 'x' : '-'));
+    }
+	else if ((file_info->st_mode & S_ISGID) && (file_info->st_mode & S_IXGRP))		/*GID-Bit && Execute-Bit */
+	{
+		fprintf(stdout,"%c",(file_info->st_mode & S_ISGID ? 's' : '-'));
+	}
+	else																		/*GID-Bit && !Execute-Bit*/
+	{
+		fprintf(stdout,"%c",(file_info->st_mode & S_ISGID ? 'S' : '-'));
+	}
+
+	/*********** Print other permissions **********************/
+	fprintf(stdout,"%c",(file_info->st_mode & S_IROTH ? 'r' : '-'));
+	fprintf(stdout,"%c",(file_info->st_mode & S_IWOTH ? 'w' : '-'));
+	if (!(file_info->st_mode & S_ISVTX))										/*Sticky-Bit*/
+	{
+		fprintf(stdout,"%c",(file_info->st_mode & S_IXOTH ? 'x' : '-'));
+	}
+	else if ((file_info->st_mode & S_ISVTX) && (file_info->st_mode & S_IXOTH))		/*Sticky-Bit && Execute-Bit*/
+	{
+		fprintf(stdout,"%c",(file_info->st_mode & S_ISVTX ? 't' : '-'));
+	}
+	else																		/*Sticky-Bit && !Execute-Bit*/
+	{
+		fprintf(stdout,"%c",(file_info->st_mode & S_ISVTX ? 'T' : '-'));
+	}
+
+	fprintf(stdout,"  ");
+}
+/**
+ * \brief -ls Argument returns number of inodes,blocks, permissions,
+		  number of links, owner, group, last modification time and directory name.
+		  sym-links are followed.
+ *
+ * \param file_info Struktur mit den Attributen der Datei
+ *
+ * \return none
+ * \retval none
+ **/
+void combine_ls(const struct stat* file_info)
+{
+	/*********** Print inode **********************/
+	fprintf(stdout,"%8lu    ", (unsigned long) file_info->st_ino);
+
+	/*********** Print blocks **********************/
+	fprintf(stdout,"%2lu  ", (unsigned long) file_info->st_blocks/2);
+
+	/*********** Print permissions **********************/
+	file_permissions(file_info);
+
+	/*********** Print number of hardlinks **********************/
+	fprintf(stdout,"%2lu ", (unsigned long) file_info->st_nlink);
+
+	/*********** Print user and group **********************/
+	/*function_name(file_info);still to do*/
+
+	/*********** Print file size **********************/
+	fprintf(stdout,"%9lu  ", (unsigned long) file_info->st_size);
+
+	/*********** Print time **********************/
+	change_time(file_info);
+}
 /*
  * =================================================================== eof ==
  */
