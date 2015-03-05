@@ -740,6 +740,15 @@ void filter_nouser(const char* path_to_examine, const char* const * params){
     }
 }
 
+/**
+ * \brief Filters the direntry due to -user parameter.
+ *
+ * applies -user filter (if defined) to path_to_examine.
+ *
+ * \param path_to_examine direntry to investigate for path.
+ * \param params Program parameter arguments given by user.
+ * \return void
+ */
 void filter_user(char* path_to_examine, const char* const * params){
     StatType stbuf;
 	int i = 1;
@@ -778,7 +787,6 @@ void filter_user(char* path_to_examine, const char* const * params){
                      print_result(path_to_examine);
                 }
             }
-
         }
         i++;
     }
