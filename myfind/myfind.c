@@ -175,7 +175,8 @@ FileType get_file_type_info(const char param);
 void change_time(const struct stat* file_info);
 void filter_name(char* path_to_examine, const char* const * params);
 void filter_path(char* path_to_examine, const char* const * params);
-void filter_no_user(char* path_to_examine, const char* const * params);
+void filter_nouser(const char* path_to_examine, const char* const * params);
+void filter_user(char* path_to_examine, const char* const * params);
 
 void file_permissions(const struct stat* file_info);
 
@@ -727,12 +728,57 @@ void filter_nouser(const char* path_to_examine, const char* const * params){
         if(strcmp(params[i], PARAM_STR_NOUSER) == 0)
         {
             /**
-             *  check if file has user assigned
+             *  check if file has no user assigned
              */
-            if(has_no_user(path_to_examine)!= -1) {
-                /* We have a pattern match! */
+            if(has_no_user(path_to_examine)== 1) {
+                /* No user assigned! */
                 print_result(path_to_examine);
             }
+            /* other options: 0 = user detected, -1 = Error */
+        }
+        i++;
+    }
+}
+
+void filter_user(char* path_to_examine, const char* const * params){
+    StatType stbuf;
+	int i = 1;
+	unsigned int search_uid = 0;
+	char * end_ptr = NULL;
+    struct passwd* pwd = NULL;
+
+	while (params[i]!= NULL) {
+        /* If we find a -nouser Parameter */
+        if(strcmp(params[i], PARAM_STR_USER) == 0)
+        {
+            /**
+            *  check if file has assiged the
+            *  user/Uid given in -user option
+            */
+            if (stat(path_to_examine, &stbuf) == -1)
+            {
+                snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                            "Can not read file status of file %s\n", get_path_buffer());
+                print_error(get_print_buffer());
+                return ;
+            }
+            search_uid = strtol(params[i+1], &end_ptr, 10);
+            if(end_ptr == '\0') {
+                /* successfull string to int conversion */
+                /* -> parameter of -user seems to be an UID */
+                if(search_uid == stbuf.st_gid) {
+                    print_result(path_to_examine);
+                }
+            }
+            else {
+                pwd=getpwuid(stbuf.st_gid);
+                if(strcmp(pwd->pw_name,params[i+1]) == 0){
+                    /* parameter of -user is equal to
+                     * user name derived from UID */
+                     print_result(path_to_examine);
+                }
+            }
+
         }
         i++;
     }
