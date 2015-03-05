@@ -161,7 +161,7 @@ inline static const char* get_program_argument_0(void);
 inline static char* get_path_buffer(void);
 
 void print_usage(void);
-int get_current_dir(char current_dir[]);
+int get_current_dir(char current_dir[], int * external_buffer_length);
 int do_file(const char* file_name, const char* const * params);
 int do_dir(const char* dir_name, const char* const * params);
 void print_error(const char* message);
@@ -714,9 +714,10 @@ void filter_path(char* path_to_examine, const char* const * params){
  */
 
 void print_result(const char* file_path){
-    char * current_dir = NULL;
+    char * buffer_current_dir = NULL;
+    int buffer_size = 0;
     int length = 0;
-    length=get_current_dir(current_dir);
+    length=get_current_dir(buffer_current_dir, &buffer_size);
     if(length) {
         /* working path and file_path begin with same part */
         printf(".%s\n",file_path+length*sizeof(char));
@@ -725,7 +726,7 @@ void print_result(const char* file_path){
     /* working path and file_pat have no common part */
         printf("%s\n",file_path);
     }
-    free(current_dir);
+    free(buffer_current_dir);
     return ;
 }
 
@@ -737,13 +738,17 @@ void print_result(const char* file_path){
  * \return int length of dir in buffer or 0 in case of failure
  */
 
-int get_current_dir(char * buffer_dirname) {
-    int need_buffer;
-    int buffer_length;
+int get_current_dir(char * buffer_dirname, int  * external_buffer_length) {
+    int need_buffer=0;
+    int buffer_length=0;
     need_buffer = (buffer_dirname == NULL);
     if(need_buffer) {
         buffer_length = get_max_path_length() * sizeof(char);
         buffer_dirname = (char*) malloc(buffer_length);
+        * external_buffer_length = buffer_length;
+    }
+    else {
+    	buffer_length = *external_buffer_length;
     }
     if (NULL == buffer_dirname)
     {
