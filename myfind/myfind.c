@@ -735,6 +735,7 @@ void print_result(const char* file_path){
  *
  * \param buffer_dirname character pointer to string buffer for path or NULL
  *        if buffer_dirname is NULL a buffer will be created and returned in buffer_dirname
+ * \param external_buffer_length pointer to integer with length of buffer_dirname
  * \return int length of dir in buffer or 0 in case of failure
  */
 
