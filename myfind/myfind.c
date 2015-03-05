@@ -169,12 +169,14 @@ void print_result(const char* file_path);
 int init(const char** program_args);
 void cleanup(void);
 boolean user_exist(const char* user_name);
-boolean has_no_user(const struct stat* file_info);
+int has_no_user(const char* path_to_examine);
 FileType get_file_type(const struct stat* file_info);
 FileType get_file_type_info(const char param);
 void change_time(const struct stat* file_info);
 void filter_name(char* path_to_examine, const char* const * params);
 void filter_path(char* path_to_examine, const char* const * params);
+void filter_no_user(char* path_to_examine, const char* const * params);
+
 void file_permissions(const struct stat* file_info);
 
 
@@ -548,9 +550,17 @@ boolean user_exist(const char* user_name)
  *
  * \return FALSE File has a user, TRUE file has no user in user id data base.
  */
-boolean has_no_user(const struct stat* file_info)
+int has_no_user(const char* path_to_examine)
 {
-    return (NULL != getpwuid(file_info->st_uid));
+    StatType stbuf;
+    if (stat(path_to_examine, &stbuf) == -1)
+    {
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                    "Can not read file status of file %s\n", get_path_buffer());
+        print_error(get_print_buffer());
+        return -1;
+    }
+    return (NULL != getpwuid(stbuf.st_uid));
 }
 
 /**
@@ -666,9 +676,6 @@ void filter_name(char* path_to_examine, const char* const * params)
                 /* We have a pattern match! */
                 print_result(path_to_examine);
             }
-            else {
-                /* no match */
-            }
         }
         i++;
     }
@@ -698,14 +705,39 @@ void filter_path(char* path_to_examine, const char* const * params){
                 /* We have a pattern match! */
                 print_result(path_to_examine);
             }
-            else {
-                /* no match */
-            }
         }
         i++;
     }
     return;
 }
+
+/**
+ * \brief Filters the direntry due to -nouser parameter.
+ *
+ * applies -nouser filter (if defined) to path_to_examine.
+ *
+ * \param path_to_examine direntry to investigate for path.
+ * \param params Program parameter arguments given by user.
+ * \return void
+ */
+void filter_nouser(const char* path_to_examine, const char* const * params){
+    int i = 1;
+    while (params[i]!= NULL) {
+        /* If we find a -nouser Parameter */
+        if(strcmp(params[i], PARAM_STR_NOUSER) == 0)
+        {
+            /**
+             *  check if file has user assigned
+             */
+            if(has_no_user(path_to_examine)!= -1) {
+                /* We have a pattern match! */
+                print_result(path_to_examine);
+            }
+        }
+        i++;
+    }
+}
+
 
 /**
  * \brief outputs matching result
