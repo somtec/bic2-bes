@@ -38,7 +38,6 @@
 #include <limits.h>
 #include <libgen.h>
 
-
 /*
  * --------------------------------------------------------------- defines --
  */
@@ -148,43 +147,73 @@ static const int USERID_BASE = 10;
  */
 
 #if DEBUG_OUTPUT
-void debug_print(const char* message);
+void
+debug_print(const char* message);
 #else /* DEBUG_OUTPUT */
 /* suppress debug_print output */
 void debug_print(__attribute((unused))const char* message)
 {}
 #endif /* DEBUG_OUTPUT */
 
-inline static int get_max_path_length(void);
-inline static char* get_print_buffer(void);
-inline static const char* get_program_argument_0(void);
-inline static char* get_path_buffer(void);
+inline static int
+get_max_path_length(void);
+inline static char*
+get_print_buffer(void);
+inline static const char*
+get_program_argument_0(void);
+inline static char*
+get_path_buffer(void);
 
-void print_usage(void);
-int get_current_dir(char current_dir[], int * external_buffer_length);
-int do_file(const char* file_name, const char* const * params);
-int do_dir(const char* dir_name, const char* const * params);
-void print_error(const char* message);
-void print_result(const char* file_path, const char* const * params, StatType file_info);
-int init(const char** program_args);
-void cleanup(void);
-boolean user_exist(const char* user_name);
-int has_no_user(const char* path_to_examine);
-FileType get_file_type(const struct stat* file_info);
-FileType get_file_type_info(const char param);
-void change_time(const struct stat* file_info);
-void filter_name(char* path_to_examine, const char* const * params, StatType file_info);
-void filter_path(char* path_to_examine, const char* const * params, StatType file_info);
-void filter_nouser(const char* path_to_examine, const char* const * params, StatType file_info);
-void filter_user(char* path_to_examine, const char* const * params, StatType file_info);
-void filter_type(const char* path_to_examine, const char* const * params, StatType file_info);
+void
+print_usage(void);
+int
+get_current_dir(char current_dir[], int * external_buffer_length);
+int
+do_file(const char* file_name, const char* const * params);
+int
+do_dir(const char* dir_name, const char* const * params);
+void
+print_error(const char* message);
+void
+print_result(const char* file_path, const char* const * params,
+             StatType file_info);
+int
+init(const char** program_args);
+void
+cleanup(void);
+boolean
+user_exist(const char* user_name);
+int
+has_no_user(const char* path_to_examine);
+FileType
+get_file_type(const struct stat* file_info);
+FileType
+get_file_type_info(const char param);
+void
+change_time(const struct stat* file_info);
+void
+filter_name(char* path_to_examine, const char* const * params,
+            StatType file_info);
+void
+filter_path(char* path_to_examine, const char* const * params,
+            StatType file_info);
+void
+filter_nouser(const char* path_to_examine, const char* const * params,
+              StatType file_info);
+void
+filter_user(char* path_to_examine, const char* const * params,
+            StatType file_info);
+void
+filter_type(const char* path_to_examine, const char* const * params,
+            StatType file_info);
 
-boolean get_file_stat(const char * path_to_examine, StatType * file_info);
+boolean
+get_file_stat(const char * path_to_examine, StatType * file_info);
 
-void file_permissions(const struct stat* file_info);
-void combine_ls(const struct stat* file_info);
-
-
+void
+file_permissions(const struct stat* file_info);
+void
+combine_ls(const struct stat* file_info);
 
 /**
  *
@@ -199,7 +228,8 @@ void combine_ls(const struct stat* file_info);
  * \retval EXIT_SUCCESS Program ended successfully.
  * \retval EXIT_FAILURE Program ended with failure.
  */
-int main(int argc, const char* argv[])
+int
+main(int argc, const char* argv[])
 {
     int result = EXIT_SUCCESS;
     char* start_dir = NULL;
@@ -220,7 +250,7 @@ int main(int argc, const char* argv[])
     }
 
     get_path_buffer()[0] = '\0';
-    start_dir = (char*) malloc(get_max_path_length() * sizeof(char));
+    start_dir = (char*)malloc(get_max_path_length() * sizeof(char));
     if (NULL == start_dir)
     {
         free(start_dir);
@@ -237,7 +267,7 @@ int main(int argc, const char* argv[])
     if (stat(get_path_buffer(), &stbuf) == -1)
     {
         snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                "Can not read file status of file %s\n", get_path_buffer());
+                 "Can not read file status of file %s\n", get_path_buffer());
         print_error(get_print_buffer());
     }
     else if (S_ISDIR(stbuf.st_mode))
@@ -281,7 +311,8 @@ int main(int argc, const char* argv[])
  * \return void
  *
  */
-void debug_print(const char* message)
+void
+debug_print(const char* message)
 {
     printf("DGB: %s", message);
 }
@@ -293,7 +324,8 @@ void debug_print(const char* message)
  *
  * \return Maximum path length.
  */
-inline static int get_max_path_length(void)
+inline static int
+get_max_path_length(void)
 {
     return smax_path;
 }
@@ -304,7 +336,8 @@ inline static int get_max_path_length(void)
  *
  * \return Buffer for printing.
  */
-inline char* get_print_buffer(void)
+inline char*
+get_print_buffer(void)
 {
     return sprint_buffer;
 }
@@ -315,7 +348,8 @@ inline char* get_print_buffer(void)
  *
  * \return Program name including path.
  */
-inline const char* get_program_argument_0(void)
+inline const char*
+get_program_argument_0(void)
 {
     return sprogram_arg0;
 }
@@ -326,7 +360,8 @@ inline const char* get_program_argument_0(void)
  *
  * \return Buffer for printing.
  */
-inline char* get_path_buffer(void)
+inline char*
+get_path_buffer(void)
 {
     return spath_buffer;
 }
@@ -337,10 +372,11 @@ inline char* get_path_buffer(void)
  *
  * \return void
  */
-void print_usage(void)
+void
+print_usage(void)
 {
-    printf("Usage: %s <directory> <test-aktion> ...\n",
-            get_program_argument_0());
+    printf("Usage: %s <directory> <test-action> ...\n",
+           get_program_argument_0());
     printf("Arguments: -user <username|userid>\n");
     printf("           -nouser\n");
     printf("           -type [bcdpfls]\n");
@@ -358,7 +394,8 @@ void print_usage(void)
  * \param params
  * \return void
  */
-int do_dir(const char* dir_name, const char* const * params)
+int
+do_dir(const char* dir_name, const char* const * params)
 {
 
     DIR* dirhandle = NULL;
@@ -369,7 +406,7 @@ int do_dir(const char* dir_name, const char* const * params)
     if (NULL == dirhandle)
     {
         snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                "Can not open directory %s\n", dir_name);
+                 "Can not open directory %s\n", dir_name);
         print_error(get_print_buffer());
         return EXIT_SUCCESS;
     }
@@ -382,29 +419,30 @@ int do_dir(const char* dir_name, const char* const * params)
 
         /* build complete path to file (DIR/FILE) */
         snprintf(get_path_buffer(), get_max_path_length(), "%s/%s", dir_name,
-                dirp->d_name);
+                 dirp->d_name);
 
         /*get information about the file and catch errors*/
         if (stat(get_path_buffer(), &stbuf) == -1)
         {
             snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                    "Can not read file status of file %s\n", get_path_buffer());
+                     "Can not read file status of file %s\n",
+                     get_path_buffer());
             print_error(get_print_buffer());
         }
         else if (S_ISDIR(stbuf.st_mode))
         {
-        	filter_type(get_path_buffer(), params, stbuf);
-        	filter_name(get_path_buffer(), params, stbuf);
+            filter_type(get_path_buffer(), params, stbuf);
+            filter_name(get_path_buffer(), params, stbuf);
             filter_path(get_path_buffer(), params, stbuf);
             filter_nouser(get_path_buffer(), params, stbuf);
             filter_user(get_path_buffer(), params, stbuf);
 
             if ((strcmp(dirp->d_name, "..") != 0
-                    && strcmp(dirp->d_name, ".") != 0))
+                            && strcmp(dirp->d_name, ".") != 0))
             {
 #if DEBUG_OUTPUT
                 snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                        "Move into directory %s.\n", dirp->d_name);
+                         "Move into directory %s.\n", dirp->d_name);
 #endif /* DEBUG_OUTPUT */
                 debug_print(get_print_buffer());
                 /* recursion for each directory in current directory */
@@ -413,8 +451,8 @@ int do_dir(const char* dir_name, const char* const * params)
         }
         else
         {
-        	filter_type(get_path_buffer(), params, stbuf);
-        	filter_name(get_path_buffer(), params, stbuf);
+            filter_type(get_path_buffer(), params, stbuf);
+            filter_name(get_path_buffer(), params, stbuf);
             filter_path(get_path_buffer(), params, stbuf);
             filter_nouser(get_path_buffer(), params, stbuf);
             filter_user(get_path_buffer(), params, stbuf);
@@ -426,7 +464,7 @@ int do_dir(const char* dir_name, const char* const * params)
     if (closedir(dirhandle) < 0)
     {
         snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                "Can not close directory %s\n", dir_name);
+                 "Can not close directory %s\n", dir_name);
         print_error(get_print_buffer());
     }
 
@@ -442,7 +480,8 @@ int do_dir(const char* dir_name, const char* const * params)
  * \param params
  * \return void
  */
-int do_file(__attribute__((unused))const char* file_name,
+int
+do_file(__attribute__((unused))const char* file_name,
         __attribute__((unused)) const char* const * params)
 {
     return EXIT_SUCCESS;
@@ -457,12 +496,13 @@ int do_file(__attribute__((unused))const char* file_name,
  * \retval ENODATA posix error ENODATA no data available for maximum path length.
  *
  */
-int init(const char** program_args)
+int
+init(const char** program_args)
 {
     sprogram_arg0 = program_args[0];
     if (NULL == sprint_buffer)
     {
-        sprint_buffer = (char*) malloc(MAX_PRINT_BUFFER * sizeof(char));
+        sprint_buffer = (char*)malloc(MAX_PRINT_BUFFER * sizeof(char));
         if (NULL == sprint_buffer)
         {
             fprintf(stderr, "%s: %s\n", sprogram_arg0, "Out of memory.\n");
@@ -479,7 +519,7 @@ int init(const char** program_args)
             print_error("Maximum path length can not be determined.\n");
             return ENODATA;
         }
-        spath_buffer = (char*) malloc(smax_path * sizeof(char));
+        spath_buffer = (char*)malloc(smax_path * sizeof(char));
         if (NULL == spath_buffer)
         {
             print_error("Out of memory.\n");
@@ -496,7 +536,8 @@ int init(const char** program_args)
  *
  * \return void
  */
-void cleanup(void)
+void
+cleanup(void)
 {
     free(spath_buffer);
     spath_buffer = NULL;
@@ -514,7 +555,8 @@ void cleanup(void)
  * \param message output on stderr.
  * \return void
  */
-void print_error(const char* message)
+void
+print_error(const char* message)
 {
     fprintf(stderr, "%s: %s\n", get_program_argument_0(), message);
 }
@@ -528,7 +570,8 @@ void print_error(const char* message)
  *\
  *\return FALSE user does not exist, TRUE user exists.
  */
-boolean user_exist(const char* user_name)
+boolean
+user_exist(const char* user_name)
 {
     struct passwd* pwd = NULL;
     char* end_userid = NULL;
@@ -542,7 +585,7 @@ boolean user_exist(const char* user_name)
     }
 
     /* is it a user id instead of a user name? */
-    uid = (uid_t) strtol(user_name, &end_userid, USERID_BASE);
+    uid = (uid_t)strtol(user_name, &end_userid, USERID_BASE);
     if (0 == uid)
     {
         return FALSE;
@@ -562,13 +605,14 @@ boolean user_exist(const char* user_name)
  *
  * \return FALSE File has a user, TRUE file has no user in user id data base.
  */
-int has_no_user(const char* path_to_examine)
+int
+has_no_user(const char* path_to_examine)
 {
     StatType stbuf;
     if (stat(path_to_examine, &stbuf) == -1)
     {
         snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                    "Can not read file status of file %s\n", get_path_buffer());
+                 "Can not read file status of file %s\n", get_path_buffer());
         print_error(get_print_buffer());
         return -1;
     }
@@ -582,7 +626,8 @@ int has_no_user(const char* path_to_examine)
  *
  * \return The file type enumerator.
  */
-FileType get_file_type(const struct stat* file_info)
+FileType
+get_file_type(const struct stat* file_info)
 {
 
     FileType result = FILE_TYPE_UNKNOWN;
@@ -626,37 +671,38 @@ FileType get_file_type(const struct stat* file_info)
  *
  * \return The file type enumerator.
  */
-FileType get_file_type_info(const char param)
+FileType
+get_file_type_info(const char param)
 {
 
     FileType result = FILE_TYPE_UNKNOWN;
 
     switch (param)
     {
-    case 'b':
-        result = FILE_TYPE_BLOCK;
-        break;
-    case 'c':
-        result = FILE_TYPE_CHAR;
-        break;
-    case 'd':
-        result = FILE_TYPE_DIRECTORY;
-        break;
-    case 'p':
-        result = FILE_TYPE_PIPE;
-        break;
-    case 'f':
-        result = FILE_TYPE_FILE;
-        break;
-    case 'l':
-        result = FILE_TYPE_LINK;
-        break;
-    case 's':
-        result = FILE_TYPE_SOCKET;
-        break;
-    default:
-        result = FILE_TYPE_UNKNOWN;
-        break;
+        case 'b':
+            result = FILE_TYPE_BLOCK;
+            break;
+        case 'c':
+            result = FILE_TYPE_CHAR;
+            break;
+        case 'd':
+            result = FILE_TYPE_DIRECTORY;
+            break;
+        case 'p':
+            result = FILE_TYPE_PIPE;
+            break;
+        case 'f':
+            result = FILE_TYPE_FILE;
+            break;
+        case 'l':
+            result = FILE_TYPE_LINK;
+            break;
+        case 's':
+            result = FILE_TYPE_SOCKET;
+            break;
+        default:
+            result = FILE_TYPE_UNKNOWN;
+            break;
     }
 
     return result;
@@ -672,19 +718,23 @@ FileType get_file_type_info(const char param)
  * \return void
  */
 
-void filter_name(char* path_to_examine, const char* const * params, StatType file_info)
+void
+filter_name(char* path_to_examine, const char* const * params,
+            StatType file_info)
 {
     int i = 1;
-    while (params[i]!= NULL) {
+    while (params[i] != NULL)
+    {
         /* If we find a -name Parameter */
-        if(strcmp(params[i], PARAM_STR_NAME) == 0)
+        if (strcmp(params[i], PARAM_STR_NAME) == 0)
         {
             /**
              *  We match the actual filepath against the pattern
              *  delivered as argument to -name
              */
 
-            if(fnmatch(params[i+1], basename(path_to_examine), 0)== 0) {
+            if (fnmatch(params[i + 1], basename(path_to_examine), 0) == 0)
+            {
                 /* We have a pattern match! */
                 print_result(path_to_examine, params, file_info);
             }
@@ -703,17 +753,23 @@ void filter_name(char* path_to_examine, const char* const * params, StatType fil
  * \param params Program parameter arguments given by user.
  * \return void
  */
-void filter_path(char* path_to_examine, const char* const * params, StatType file_info){
+void
+filter_path(char* path_to_examine, const char* const * params,
+            StatType file_info)
+{
     int i = 1;
-    while (params[i]!= NULL) {
+    while (params[i] != NULL)
+    {
         /* If we find a -name Parameter */
-        if(strcmp(params[i], PARAM_STR_PATH) == 0)
+        if (strcmp(params[i], PARAM_STR_PATH) == 0)
         {
             /**
              *  We match the actual filepath against the pattern
              *  delivered as argument to -name
              */
-            if(fnmatch(params[i+1], basename(path_to_examine), FNM_PATHNAME)== 0) {
+            if (fnmatch(params[i + 1], basename(path_to_examine), FNM_PATHNAME)
+                            == 0)
+            {
                 /* We have a pattern match! */
                 print_result(path_to_examine, params, file_info);
             }
@@ -732,22 +788,27 @@ void filter_path(char* path_to_examine, const char* const * params, StatType fil
  * \param params Program parameter arguments given by user.
  * \return void
  */
-void filter_nouser(const char* path_to_examine, const char* const * params, StatType file_info){
+void
+filter_nouser(const char* path_to_examine, const char* const * params,
+              StatType file_info)
+{
     int i = 1;
-    while (params[i]!= NULL) {
+    while (params[i] != NULL)
+    {
         /* If we find a -nouser Parameter */
-        if(strcmp(params[i], PARAM_STR_NOUSER) == 0)
+        if (strcmp(params[i], PARAM_STR_NOUSER) == 0)
         {
             /**
              *  check if file has no user assigned
              */
-            if(has_no_user(path_to_examine)== 1) {
+            if (has_no_user(path_to_examine) == 1)
+            {
                 /* No user assigned! */
                 print_result(path_to_examine, params, file_info);
             }
             /* other options: 0 = user detected, -1 = Error */
 
-            return ; /* processed the option multiple is useless */
+            return; /* processed the option multiple is useless */
         }
         i++;
     }
@@ -762,34 +823,42 @@ void filter_nouser(const char* path_to_examine, const char* const * params, Stat
  * \param params Program parameter arguments given by user.
  * \return void
  */
-void filter_user(char* path_to_examine, const char* const * params, StatType file_info){
-	int i = 1;
-	unsigned int search_uid = 0;
-	char * end_ptr = NULL;
+void
+filter_user(char* path_to_examine, const char* const * params,
+            StatType file_info)
+{
+    int i = 1;
+    unsigned int search_uid = 0;
+    char * end_ptr = NULL;
     struct passwd* pwd = NULL;
 
-	while (params[i]!= NULL) {
+    while (params[i] != NULL)
+    {
         /* If we find a -nouser Parameter */
-        if(strcmp(params[i], PARAM_STR_USER) == 0)
+        if (strcmp(params[i], PARAM_STR_USER) == 0)
         {
             /**
-            *  check if file has assiged the
-            *  user/Uid given in -user option
-            */
-            search_uid = strtol(params[i+1], &end_ptr, 10);
-            if(end_ptr == '\0') {
+             *  check if file has assiged the
+             *  user/Uid given in -user option
+             */
+            search_uid = strtol(params[i + 1], &end_ptr, 10);
+            if (end_ptr == '\0')
+            {
                 /* successfull string to int conversion */
                 /* -> parameter of -user seems to be an UID */
-                if(search_uid == file_info.st_gid) {
-                    print_result(path_to_examine, params,file_info);
+                if (search_uid == file_info.st_gid)
+                {
+                    print_result(path_to_examine, params, file_info);
                 }
             }
-            else {
-                pwd=getpwuid(file_info.st_gid);
-                if(strcmp(pwd->pw_name,params[i+1]) == 0){
+            else
+            {
+                pwd = getpwuid(file_info.st_gid);
+                if (strcmp(pwd->pw_name, params[i + 1]) == 0)
+                {
                     /* parameter of -user is equal to
                      * user name derived from UID */
-                     print_result(path_to_examine,params,file_info);
+                    print_result(path_to_examine, params, file_info);
                 }
             }
         }
@@ -806,48 +875,61 @@ void filter_user(char* path_to_examine, const char* const * params, StatType fil
  * \param params Program parameter arguments given by user.
  * \return void
  */
-void filter_type(const char* path_to_examine, const char* const * params, StatType file_info){
+void
+filter_type(const char* path_to_examine, const char* const * params,
+            StatType file_info)
+{
     int i = 1;
     char * option_argument = NULL;
-    while (params[i]!= NULL) {
-        /* If we find a -nouser Parameter */
-        if(strcmp(params[i], PARAM_STR_TYPE) == 0)
-        {
-        	/* check if there is an option argument*/
-        	if(strlen(params[i+1])==0) {
-        		snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-        			"missing argument to `-%s'",PARAM_STR_TYPE);
-        		print_error(get_print_buffer());
-        		return ;
-        	}
-        	/* check if option argument has only one letter*/
-        	if(strlen(params[i+1]) > 1) {
-        		snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-        			"Arguments to %s should contain only one letter",PARAM_STR_TYPE);
-        		print_error(get_print_buffer());
-        		return ;
-        	}
-        	/* check if option argument is known */
-        	option_argument = strchr(PARAM_STR_TYPE_VALS, (int) params[i+1]);
-        	if(option_argument==NULL) {
-        		snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-        				"Unknown argument to %s: %c",PARAM_STR_TYPE, *option_argument);
-        		print_error(get_print_buffer());
-        		return;
-        	}
+    int test_char = 0;
+    const char* parameter1;
 
-        	/* check if option argument describes the same file type as file to examine has */
-        	if (get_file_type_info(*option_argument) == get_file_type(&file_info))
+    while (params[i] != NULL)
+    {
+        parameter1 = params[i + 1];
+        /* If we find a -nouser Parameter */
+        if (strcmp(params[i], PARAM_STR_TYPE) == 0)
+        {
+            /* check if there is an option argument*/
+            if (strlen(params[i + 1]) == 0)
             {
-                print_result(path_to_examine,params, file_info);
+                snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                         "missing argument to `-%s'", PARAM_STR_TYPE);
+                print_error(get_print_buffer());
+                return;
             }
-            return ; /* processed the option multiple is useless */
+            /* check if option argument has only one letter*/
+            if (strlen(params[i + 1]) > 1)
+            {
+                snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                         "Arguments to %s should contain only one letter",
+                         PARAM_STR_TYPE);
+                print_error(get_print_buffer());
+                return;
+            }
+            /* check if option argument is known */
+            test_char = (int)(*parameter1);
+            option_argument = strchr(PARAM_STR_TYPE_VALS, test_char);
+            if (NULL == option_argument)
+            {
+                snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                         "Unknown argument to %s: %c", PARAM_STR_TYPE,
+                         *option_argument);
+                print_error(get_print_buffer());
+                return;
+            }
+
+            /* check if option argument describes the same file type as file to examine has */
+            if (get_file_type_info(*option_argument)
+                            == get_file_type(&file_info))
+            {
+                print_result(path_to_examine, params, file_info);
+            }
+            return; /* processed the option multiple is useless */
         }
         i++;
     }
 }
-
-
 
 /**
  * \brief outputs matching result
@@ -856,47 +938,53 @@ void filter_type(const char* path_to_examine, const char* const * params, StatTy
  * \return void
  */
 
-void print_result(const char* file_path, const char* const * params, StatType file_info){
+void
+print_result(const char* file_path, const char* const * params,
+             StatType file_info)
+{
     char * buffer_current_dir = NULL;
     int buffer_size = 0;
     int length = 0;
     int i = 0;
 
     /* check for -ls option */
-    while (params[i]!= NULL) {
-        if(strcmp(params[i], PARAM_STR_LS) == 0)
+    while (params[i] != NULL)
+    {
+        if (strcmp(params[i], PARAM_STR_LS) == 0)
         {
-        	combine_ls(&file_info);
-        	printf(" ");
-        	break ;
+            combine_ls(&file_info);
+            printf(" ");
+            break;
         }
         i++;
     }
 
-    length=get_current_dir(buffer_current_dir, &buffer_size);
-    if(length) {
+    length = get_current_dir(buffer_current_dir, &buffer_size);
+    if (length)
+    {
         /* working path and file_path begin with same part */
-        printf(".%s\n",file_path+length*sizeof(char));
+        printf(".%s\n", file_path + length * sizeof(char));
     }
-    else {
-    /* working path and file_pat have no common part */
-        printf("%s\n",file_path);
+    else
+    {
+        /* working path and file_pat have no common part */
+        printf("%s\n", file_path);
     }
     free(buffer_current_dir);
-    return ;
+    return;
 }
 
-boolean get_file_stat(const char * path_to_examine, StatType *stbuf) {
-	if (stat(path_to_examine, stbuf) == -1)
+boolean
+get_file_stat(const char * path_to_examine, StatType *stbuf)
+{
+    if (stat(path_to_examine, stbuf) == -1)
     {
         snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                    "Can not read file status of file %s\n", get_path_buffer());
+                 "Can not read file status of file %s\n", get_path_buffer());
         print_error(get_print_buffer());
     }
     return TRUE;
 }
-
-
 
 /**
  * \brief returns length and name of current dir
@@ -907,27 +995,34 @@ boolean get_file_stat(const char * path_to_examine, StatType *stbuf) {
  * \return int length of dir in buffer or 0 in case of failure
  */
 
-int get_current_dir(char * buffer_dirname, int  * external_buffer_length) {
-    int need_buffer=0;
-    int buffer_length=0;
+int
+get_current_dir(char * buffer_dirname, int * external_buffer_length)
+{
+    int need_buffer = 0;
+    int buffer_length = 0;
     need_buffer = (buffer_dirname == NULL);
-    if(need_buffer) {
+    if (need_buffer)
+    {
         buffer_length = get_max_path_length() * sizeof(char);
-        buffer_dirname = (char*) malloc(buffer_length);
-        * external_buffer_length = buffer_length;
+        buffer_dirname = (char*)malloc(buffer_length);
+        *external_buffer_length = buffer_length;
     }
-    else {
-    	buffer_length = *external_buffer_length;
+    else
+    {
+        buffer_length = *external_buffer_length;
     }
     if (NULL == buffer_dirname)
     {
-        if(need_buffer) free(buffer_dirname);
+        if (need_buffer)
+            free(buffer_dirname);
         buffer_dirname = NULL;
         print_error("could not allocate memory.\n");
         return 0;
     }
-    if (getcwd(buffer_dirname, buffer_length) == NULL) {
-        if(need_buffer) free(buffer_dirname);
+    if (getcwd(buffer_dirname, buffer_length) == NULL)
+    {
+        if (need_buffer)
+            free(buffer_dirname);
         buffer_dirname = NULL;
         return 0;
     }
@@ -941,11 +1036,12 @@ int get_current_dir(char * buffer_dirname, int  * external_buffer_length) {
  *
  * \return none
  **/
-void change_time(const struct stat* file_info)
+void
+change_time(const struct stat* file_info)
 {
     /* Convert the time into the local time format it. */
     strftime(get_print_buffer(), MAX_PRINT_BUFFER - 1, "%b %d %H:%M",
-            localtime(&file_info->st_mtime));
+             localtime(&file_info->st_mtime));
     fprintf(stdout, "%s", get_print_buffer());
 }
 
@@ -954,96 +1050,97 @@ void change_time(const struct stat* file_info)
  *
  * \param file_info Struktur mit den Attributen der Datei
  *
- * \return none
- * \retval none
+ * \return
  **/
-void file_permissions(const struct stat* file_info)
+void
+file_permissions(const struct stat* file_info)
 {
     /*********** Print file type **********************/
-    fprintf(stdout,"%c",get_file_type(file_info));
+    fprintf(stdout, "%c", get_file_type(file_info));
 
     /*********** Print user permissions **********************/
-    fprintf(stdout,"%c",(file_info->st_mode & S_IRUSR ? 'r' : '-'));
-    fprintf(stdout,"%c",(file_info->st_mode & S_IWUSR ? 'w' : '-'));
-    if (!(file_info->st_mode & S_ISUID))										/*no UID-Bit */
+    fprintf(stdout, "%c", (file_info->st_mode & S_IRUSR ? 'r' : '-'));
+    fprintf(stdout, "%c", (file_info->st_mode & S_IWUSR ? 'w' : '-'));
+    if (!(file_info->st_mode & S_ISUID)) /*no UID-Bit */
     {
-        fprintf(stdout,"%c",(file_info->st_mode & S_IXUSR ? 'x' : '-'));
+        fprintf(stdout, "%c", (file_info->st_mode & S_IXUSR ? 'x' : '-'));
     }
-    else if ((file_info->st_mode & S_ISUID) && (file_info->st_mode & S_IXUSR))		/*UID-Bit && Execute-Bit*/
+    else if ((file_info->st_mode & S_ISUID) && (file_info->st_mode & S_IXUSR)) /*UID-Bit && Execute-Bit*/
     {
-        fprintf(stdout,"%c",(file_info->st_mode & S_ISUID ? 's' : '-'));
+        fprintf(stdout, "%c", (file_info->st_mode & S_ISUID ? 's' : '-'));
     }
-    else																		/*UID-Bit && !Execute-Bit*/
+    else /*UID-Bit && !Execute-Bit*/
     {
-		fprintf(stdout,"%c",(file_info->st_mode & S_ISUID ? 'S' : '-'));
-	}
-
-	/*********** Print group permissions **********************/
-    fprintf(stdout,"%c",(file_info->st_mode & S_IRGRP ? 'r' : '-'));
-    fprintf(stdout,"%c",(file_info->st_mode & S_IWGRP ? 'w' : '-'));
-    if (!(file_info->st_mode & S_ISGID))										/*no GID-Bit */
-    {
-		fprintf(stdout,"%c",(file_info->st_mode & S_IXGRP ? 'x' : '-'));
+        fprintf(stdout, "%c", (file_info->st_mode & S_ISUID ? 'S' : '-'));
     }
-	else if ((file_info->st_mode & S_ISGID) && (file_info->st_mode & S_IXGRP))		/*GID-Bit && Execute-Bit */
-	{
-		fprintf(stdout,"%c",(file_info->st_mode & S_ISGID ? 's' : '-'));
-	}
-	else																		/*GID-Bit && !Execute-Bit*/
-	{
-		fprintf(stdout,"%c",(file_info->st_mode & S_ISGID ? 'S' : '-'));
-	}
 
-	/*********** Print other permissions **********************/
-	fprintf(stdout,"%c",(file_info->st_mode & S_IROTH ? 'r' : '-'));
-	fprintf(stdout,"%c",(file_info->st_mode & S_IWOTH ? 'w' : '-'));
-	if (!(file_info->st_mode & S_ISVTX))										/*Sticky-Bit*/
-	{
-		fprintf(stdout,"%c",(file_info->st_mode & S_IXOTH ? 'x' : '-'));
-	}
-	else if ((file_info->st_mode & S_ISVTX) && (file_info->st_mode & S_IXOTH))		/*Sticky-Bit && Execute-Bit*/
-	{
-		fprintf(stdout,"%c",(file_info->st_mode & S_ISVTX ? 't' : '-'));
-	}
-	else																		/*Sticky-Bit && !Execute-Bit*/
-	{
-		fprintf(stdout,"%c",(file_info->st_mode & S_ISVTX ? 'T' : '-'));
-	}
+    /*********** Print group permissions **********************/
+    fprintf(stdout, "%c", (file_info->st_mode & S_IRGRP ? 'r' : '-'));
+    fprintf(stdout, "%c", (file_info->st_mode & S_IWGRP ? 'w' : '-'));
+    if (!(file_info->st_mode & S_ISGID)) /*no GID-Bit */
+    {
+        fprintf(stdout, "%c", (file_info->st_mode & S_IXGRP ? 'x' : '-'));
+    }
+    else if ((file_info->st_mode & S_ISGID) && (file_info->st_mode & S_IXGRP)) /*GID-Bit && Execute-Bit */
+    {
+        fprintf(stdout, "%c", (file_info->st_mode & S_ISGID ? 's' : '-'));
+    }
+    else /*GID-Bit && !Execute-Bit*/
+    {
+        fprintf(stdout, "%c", (file_info->st_mode & S_ISGID ? 'S' : '-'));
+    }
 
-	fprintf(stdout,"  ");
+    /*********** Print other permissions **********************/
+    fprintf(stdout, "%c", (file_info->st_mode & S_IROTH ? 'r' : '-'));
+    fprintf(stdout, "%c", (file_info->st_mode & S_IWOTH ? 'w' : '-'));
+    if (!(file_info->st_mode & S_ISVTX)) /*Sticky-Bit*/
+    {
+        fprintf(stdout, "%c", (file_info->st_mode & S_IXOTH ? 'x' : '-'));
+    }
+    else if ((file_info->st_mode & S_ISVTX) && (file_info->st_mode & S_IXOTH)) /*Sticky-Bit && Execute-Bit*/
+    {
+        fprintf(stdout, "%c", (file_info->st_mode & S_ISVTX ? 't' : '-'));
+    }
+    else /*Sticky-Bit && !Execute-Bit*/
+    {
+        fprintf(stdout, "%c", (file_info->st_mode & S_ISVTX ? 'T' : '-'));
+    }
+
+    fprintf(stdout, "  ");
 }
 /**
  * \brief -ls Argument returns number of inodes,blocks, permissions,
-		  number of links, owner, group, last modification time and directory name.
-		  sym-links are followed.
+ number of links, owner, group, last modification time and directory name.
+ sym-links are followed.
  *
  * \param file_info Struktur mit den Attributen der Datei
  *
  * \return none
  * \retval none
  **/
-void combine_ls(const struct stat* file_info)
+void
+combine_ls(const struct stat* file_info)
 {
-	/*********** Print inode **********************/
-	fprintf(stdout,"%8lu    ", (unsigned long) file_info->st_ino);
+    /*********** Print inode **********************/
+    fprintf(stdout, "%8lu    ", (unsigned long)file_info->st_ino);
 
-	/*********** Print blocks **********************/
-	fprintf(stdout,"%2lu  ", (unsigned long) file_info->st_blocks/2);
+    /*********** Print blocks **********************/
+    fprintf(stdout, "%2lu  ", (unsigned long)file_info->st_blocks / 2);
 
-	/*********** Print permissions **********************/
-	file_permissions(file_info);
+    /*********** Print permissions **********************/
+    file_permissions(file_info);
 
-	/*********** Print number of hardlinks **********************/
-	fprintf(stdout,"%2lu ", (unsigned long) file_info->st_nlink);
+    /*********** Print number of hardlinks **********************/
+    fprintf(stdout, "%2lu ", (unsigned long)file_info->st_nlink);
 
-	/*********** Print user and group **********************/
-	/*function_name(file_info);still to do*/
+    /*********** Print user and group **********************/
+    /*function_name(file_info);still to do*/
 
-	/*********** Print file size **********************/
-	fprintf(stdout,"%9lu  ", (unsigned long) file_info->st_size);
+    /*********** Print file size **********************/
+    fprintf(stdout, "%9lu  ", (unsigned long)file_info->st_size);
 
-	/*********** Print time **********************/
-	change_time(file_info);
+    /*********** Print time **********************/
+    change_time(file_info);
 }
 /*
  * =================================================================== eof ==
