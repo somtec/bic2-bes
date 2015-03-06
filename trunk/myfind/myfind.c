@@ -165,8 +165,7 @@ int get_current_dir(char current_dir[], int * external_buffer_length);
 int do_file(const char* file_name, const char* const * params);
 int do_dir(const char* dir_name, const char* const * params);
 void print_error(const char* message);
-void print_result(const char* file_path, const char* const * params,
-        StatType file_info);
+void print_result(const char* file_path, const char* const * params, StatType file_info);
 int init(const char** program_args);
 void cleanup(void);
 boolean user_exist(const char* user_name);
@@ -174,16 +173,11 @@ int has_no_user(const char* path_to_examine);
 FileType get_file_type(const struct stat* file_info);
 FileType get_file_type_info(const char param);
 void change_time(const struct stat* file_info);
-void filter_name(char* path_to_examine, const char* const * params,
-        StatType file_info);
-void filter_path(char* path_to_examine, const char* const * params,
-        StatType file_info);
-void filter_nouser(const char* path_to_examine, const char* const * params,
-        StatType file_info);
-void filter_user(char* path_to_examine, const char* const * params,
-        StatType file_info);
-void filter_type(const char* path_to_examine, const char* const * params,
-        StatType file_info);
+void filter_name(char* path_to_examine, const char* const * params, StatType file_info);
+void filter_path(char* path_to_examine, const char* const * params, StatType file_info);
+void filter_nouser(const char* path_to_examine, const char* const * params, StatType file_info);
+void filter_user(char* path_to_examine, const char* const * params, StatType file_info);
+void filter_type(const char* path_to_examine, const char* const * params, StatType file_info);
 
 boolean get_file_stat(const char * path_to_examine, StatType * file_info);
 
@@ -240,8 +234,7 @@ int main(int argc, const char* argv[])
     /*get information about the file and catch errors*/
     if (stat(get_path_buffer(), &stbuf) == -1)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                "Can not read file status of file %s\n", get_path_buffer());
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Can not read file status of file %s\n", get_path_buffer());
         print_error(get_print_buffer());
     }
     else if (S_ISDIR(stbuf.st_mode))
@@ -346,8 +339,7 @@ get_path_buffer(void)
  */
 void print_usage(void)
 {
-    printf("Usage: %s <directory> <test-action> ...\n",
-            get_program_argument_0());
+    printf("Usage: %s <directory> <test-action> ...\n", get_program_argument_0());
     printf("Arguments: -user <username|userid>\n");
     printf("           -nouser\n");
     printf("           -type [bcdpfls]\n");
@@ -375,8 +367,7 @@ int do_dir(const char* dir_name, const char* const * params)
     dirhandle = opendir(dir_name);
     if (NULL == dirhandle)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                "Can not open directory %s\n", dir_name);
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Can not open directory %s\n", dir_name);
         print_error(get_print_buffer());
         return EXIT_SUCCESS;
     }
@@ -388,14 +379,12 @@ int do_dir(const char* dir_name, const char* const * params)
         get_path_buffer()[0] = '\0';
 
         /* build complete path to file (DIR/FILE) */
-        snprintf(get_path_buffer(), get_max_path_length(), "%s/%s", dir_name,
-                dirp->d_name);
+        snprintf(get_path_buffer(), get_max_path_length(), "%s/%s", dir_name, dirp->d_name);
 
         /*get information about the file and catch errors*/
         if (stat(get_path_buffer(), &stbuf) == -1)
         {
-            snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                    "Can not read file status of file %s\n", get_path_buffer());
+            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Can not read file status of file %s\n", get_path_buffer());
             print_error(get_print_buffer());
         }
         else if (S_ISDIR(stbuf.st_mode))
@@ -406,12 +395,10 @@ int do_dir(const char* dir_name, const char* const * params)
             filter_nouser(get_path_buffer(), params, stbuf);
             filter_user(get_path_buffer(), params, stbuf);
 
-            if ((strcmp(dirp->d_name, "..") != 0
-                    && strcmp(dirp->d_name, ".") != 0))
+            if ((strcmp(dirp->d_name, "..") != 0 && strcmp(dirp->d_name, ".") != 0))
             {
 #if DEBUG_OUTPUT
-                snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                        "Move into directory %s.\n", dirp->d_name);
+                snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Move into directory %s.\n", dirp->d_name);
 #endif /* DEBUG_OUTPUT */
                 debug_print(get_print_buffer());
                 /* recursion for each directory in current directory */
@@ -432,8 +419,7 @@ int do_dir(const char* dir_name, const char* const * params)
 
     if (closedir(dirhandle) < 0)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                "Can not close directory %s\n", dir_name);
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Can not close directory %s\n", dir_name);
         print_error(get_print_buffer());
     }
 
@@ -449,8 +435,7 @@ int do_dir(const char* dir_name, const char* const * params)
  * \param params
  * \return void
  */
-int do_file(__attribute__((unused))const char* file_name,
-        __attribute__((unused)) const char* const * params)
+int do_file(__attribute__((unused))const char* file_name, __attribute__((unused)) const char* const * params)
 {
     return EXIT_SUCCESS;
 }
@@ -572,8 +557,7 @@ int has_no_user(const char* path_to_examine)
     StatType stbuf;
     if (stat(path_to_examine, &stbuf) == -1)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                "Can not read file status of file %s\n", get_path_buffer());
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Can not read file status of file %s\n", get_path_buffer());
         print_error(get_print_buffer());
         return -1;
     }
@@ -677,8 +661,7 @@ FileType get_file_type_info(const char param)
  * \return void
  */
 
-void filter_name(char* path_to_examine, const char* const * params,
-        StatType file_info)
+void filter_name(char* path_to_examine, const char* const * params, StatType file_info)
 {
     int i = 1;
     while (params[i] != NULL)
@@ -711,8 +694,7 @@ void filter_name(char* path_to_examine, const char* const * params,
  * \param params Program parameter arguments given by user.
  * \return void
  */
-void filter_path(char* path_to_examine, const char* const * params,
-        StatType file_info)
+void filter_path(char* path_to_examine, const char* const * params, StatType file_info)
 {
     int i = 1;
     while (params[i] != NULL)
@@ -724,8 +706,7 @@ void filter_path(char* path_to_examine, const char* const * params,
              *  We match the actual filepath against the pattern
              *  delivered as argument to -name
              */
-            if (fnmatch(params[i + 1], basename(path_to_examine), FNM_PATHNAME)
-                    == 0)
+            if (fnmatch(params[i + 1], basename(path_to_examine), FNM_PATHNAME) == 0)
             {
                 /* We have a pattern match! */
                 print_result(path_to_examine, params, file_info);
@@ -745,8 +726,7 @@ void filter_path(char* path_to_examine, const char* const * params,
  * \param params Program parameter arguments given by user.
  * \return void
  */
-void filter_nouser(const char* path_to_examine, const char* const * params,
-        StatType file_info)
+void filter_nouser(const char* path_to_examine, const char* const * params, StatType file_info)
 {
     int i = 1;
     while (params[i] != NULL)
@@ -779,8 +759,7 @@ void filter_nouser(const char* path_to_examine, const char* const * params,
  * \param params Program parameter arguments given by user.
  * \return void
  */
-void filter_user(char* path_to_examine, const char* const * params,
-        StatType file_info)
+void filter_user(char* path_to_examine, const char* const * params, StatType file_info)
 {
     int i = 1;
     unsigned int search_uid = 0;
@@ -830,8 +809,7 @@ void filter_user(char* path_to_examine, const char* const * params,
  * \param params Program parameter arguments given by user.
  * \return void
  */
-void filter_type(const char* path_to_examine, const char* const * params,
-        StatType file_info)
+void filter_type(const char* path_to_examine, const char* const * params, StatType file_info)
 {
     int i = 1;
     char * option_argument = NULL;
@@ -847,17 +825,15 @@ void filter_type(const char* path_to_examine, const char* const * params,
             /* check if there is an option argument*/
             if (strlen(params[i + 1]) == 0)
             {
-                snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                        "missing argument to `-%s'", PARAM_STR_TYPE);
+                snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "missing argument to `-%s'", PARAM_STR_TYPE);
                 print_error(get_print_buffer());
                 return;
             }
             /* check if option argument has only one letter*/
             if (strlen(params[i + 1]) > 1)
             {
-                snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                        "Arguments to %s should contain only one letter",
-                        PARAM_STR_TYPE);
+                snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Arguments to %s should contain only one letter",
+                PARAM_STR_TYPE);
                 print_error(get_print_buffer());
                 return;
             }
@@ -866,16 +842,14 @@ void filter_type(const char* path_to_examine, const char* const * params,
             option_argument = strchr(PARAM_STR_TYPE_VALS, test_char);
             if (NULL == option_argument)
             {
-                snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                        "Unknown argument to %s: %c", PARAM_STR_TYPE,
+                snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Unknown argument to %s: %c", PARAM_STR_TYPE,
                         *option_argument);
                 print_error(get_print_buffer());
                 return;
             }
 
             /* check if option argument describes the same file type as file to examine has */
-            if (get_file_type_info(*option_argument)
-                    == get_file_type(&file_info))
+            if (get_file_type_info(*option_argument) == get_file_type(&file_info))
             {
                 print_result(path_to_examine, params, file_info);
             }
@@ -892,8 +866,7 @@ void filter_type(const char* path_to_examine, const char* const * params,
  * \return void
  */
 
-void print_result(const char* file_path, const char* const * params,
-        StatType file_info)
+void print_result(const char* file_path, const char* const * params, StatType file_info)
 {
     char * buffer_current_dir = NULL;
     int buffer_size = 0;
@@ -938,8 +911,7 @@ boolean get_file_stat(const char * path_to_examine, StatType *stbuf)
 {
     if (stat(path_to_examine, stbuf) == -1)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                "Can not read file status of file %s\n", get_path_buffer());
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Can not read file status of file %s\n", get_path_buffer());
         print_error(get_print_buffer());
     }
     return TRUE;
@@ -997,8 +969,7 @@ int get_current_dir(char * buffer_dirname, int * external_buffer_length)
 void change_time(const struct stat* file_info)
 {
     /* Convert the time into the local time format it. */
-    strftime(get_print_buffer(), MAX_PRINT_BUFFER - 1, "%b %d %H:%M",
-            localtime(&file_info->st_mtime));
+    strftime(get_print_buffer(), MAX_PRINT_BUFFER - 1, "%b %d %H:%M", localtime(&file_info->st_mtime));
     fprintf(stdout, "%s", get_print_buffer());
 }
 
