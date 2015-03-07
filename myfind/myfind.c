@@ -387,7 +387,7 @@ int do_dir(const char* dir_name, const char* const* params)
 
     /*open directory catch error*/
     dirhandle = opendir(dir_name);
-    if (NULL != dirhandle)
+    if (NULL == dirhandle)
     {
         snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "opendir() failed: Can not open directory %s\n", dir_name);
         print_error(get_print_buffer());
