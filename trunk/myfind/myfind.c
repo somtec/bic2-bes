@@ -206,6 +206,7 @@ void filter_type(const char* path_to_examine, const char* const* params, StatTyp
 
 void print_file_change_time(const StatType* file_info);
 void print_file_permissions(const StatType* file_info);
+void print_usr_and_grp(const StatType* file_info);
 
 void combine_ls(const StatType* file_info);
 
@@ -1090,7 +1091,49 @@ void print_file_permissions(const StatType* file_info)
 
     fprintf(stdout, "  ");
 }
+/**
+ * \brief print username and grpname to standard out
+ *
+ * \param file_info Struktur mit den Attributen der Datei
+ *
+ * \return none
+ * \retval none
+ **/
+void print_usr_and_grp(const  StatType* file_info)
+{
+    struct passwd *pwd;		/* Pointer auf struct passwd in pwd.h */
+    struct group *grp;		/* Pointer auf struct group in grp.h */
 
+
+	/*********** Print username **********************/
+
+    pwd = getpwuid(file_info->st_uid);
+    if(pwd != NULL)
+    {
+    	fprintf(stdout,"%s", pwd->pw_name);
+    }
+    else
+    {
+    	fprintf(stdout,"%d", file_info->st_uid);
+    }
+
+    fprintf(stdout," ");	/*Leerzeichen*/
+
+	/*********** Print groupname **********************/
+    grp = getgrgid(file_info->st_gid);
+    if(pwd != NULL)
+    {
+    fprintf(stdout,"%s", grp->gr_name);
+    }
+    else if (grp != NULL)
+    {
+    	fprintf(stdout,"%s", grp->gr_name);
+    }
+    else
+    {
+    	fprintf(stdout,"%d", file_info->st_gid);
+    }
+}
 /**
  * \brief -ls Argument returns number of i-nodes,blocks, permissions,
  number of links, owner, group, last modification time and directory name.
@@ -1115,7 +1158,7 @@ void combine_ls(const StatType* file_info)
     fprintf(stdout, "%2lu ", (unsigned long) file_info->st_nlink);
 
     /* Print user and group */
-    /*function_name(file_info);still to do*/
+    print_usr_and_grp(file_info);
 
     /* Print file size */
     fprintf(stdout, "%9lu  ", (unsigned long) file_info->st_size);
