@@ -44,20 +44,6 @@
 /** DEBUG_OUTPUT 0 is without debug_print(), else debug_print() function active. */
 #define DEBUG_OUTPUT 1
 
-/* supported parameters of myfind */
-#define PARAM_STR_USER "-user"
-#define PARAM_STR_NOUSER "-nouser"
-#define PARAM_STR_NAME "-name"
-#define PARAM_STR_PATH "-path"
-#define PARAM_STR_TYPE "-type"
-#define PARAM_STR_LS "-ls"
-#define PARAM_STR_PRINT "-print"
-#define PARAM_STR_TYPE_VALS "bcdflps"
-
-/* Output strings if myfind fails. */
-#define CHECKSTRINGFORPARAMVALUE_INFO_STR_PARAM "The parameter %s needs correct additional information.\n"
-#define CHECKSTRINGFORPARAMVALUE_INFO_STR_PATH "The path is missing.\n"
-
 /*
  * -------------------------------------------------------------- typedefs --
  */
@@ -142,6 +128,40 @@ static char* sprint_buffer = NULL;
 
 /** Want to convert user id number into decimal number. */
 static const int USERID_BASE = 10;
+
+/** User text string for supported parameter user. */
+static const char* PARAM_STR_USER = "-user";
+/** User text string for supported parameter nouser. */
+static const char* PARAM_STR_NOUSER = "-nouser";
+/** User text string for supported parameter name. */
+static const char* PARAM_STR_NAME = "-name";
+/** Output string for supported parameter path. */
+static const char* PARAM_STR_PATH = "-path";
+/** User text for supported parameter type. */
+static const char* PARAM_STR_TYPE = "-type";
+/** User text for supported parameter ls. */
+static const char* PARAM_STR_LS = "-ls";
+
+#if 0
+/* TODO implement print */
+/** User text for supported parameter user. */
+static const char* PARAM_STR_PRINT = "-print";
+#endif /* 0 */
+
+/** Possible flags set by user for supported parameter type. */
+static const char* PARAM_STR_TYPE_VALS = "bcdflps";
+
+#if 0
+/* TODO implement parsing of input parameters. */
+/** Output strings if parameter can not be determined. */
+static const char*  CHECKSTRINGFORPARAMVALUE_INFO_STR_PARAM =
+        "The parameter %s needs correct additional information.\n";
+
+/** Output strings if path is missing. */
+static const char*  CHECKSTRINGFORPARAMVALUE_INFO_STR_PATH =
+        "The path is missing.\n";
+#endif /* 0 */
+
 
 /* ------------------------------------------------------------- functions --
  */
@@ -228,7 +248,7 @@ int main(int argc, const char* argv[])
     {
         free(start_dir);
         start_dir = NULL;
-        print_error("Out of memory.\n");
+        print_error("malloc() failed: Out of memory.\n");
         cleanup();
         return EXIT_FAILURE;
     }
@@ -237,15 +257,15 @@ int main(int argc, const char* argv[])
     snprintf(get_path_buffer(), get_max_path_length(), "%s", argv[1]);
 
     /*get information about the file and catch errors*/
-    if (stat(get_path_buffer(), &stbuf) == -1)
+    if (lstat(get_path_buffer(), &stbuf) == -1)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Can not read file status of file %s\n", get_path_buffer());
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "lstat() failed: Can not read file status of file %s\n", get_path_buffer());
         print_error(get_print_buffer());
     }
     else if (S_ISDIR(stbuf.st_mode))
     {
         found_dir = get_path_buffer();
-        start_dir = found_dir;
+        strcpy(start_dir, found_dir);
     }
 
     /* get current directory */
@@ -253,8 +273,7 @@ int main(int argc, const char* argv[])
     {
         if (NULL == getcwd(start_dir, get_max_path_length()))
         {
-            print_error("Can not determine current working directory.");
-
+            print_error("getcwd() failed: Can not determine current working directory.");
             free(start_dir);
             start_dir = NULL;
             cleanup();
@@ -362,45 +381,42 @@ void print_usage(void)
  */
 int do_dir(const char* dir_name, const char* const* params)
 {
-
-    /* TODO: Andrea wrote why: return always EXIT_SUCCESS? - previously it returned void */
     DIR* dirhandle = NULL;
     struct dirent* dirp = NULL;
 
     /*open directory catch error*/
     dirhandle = opendir(dir_name);
-    if (NULL == dirhandle)
+    if (NULL != dirhandle)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Can not open directory %s\n", dir_name);
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "opendir() failed: Can not open directory %s\n", dir_name);
         print_error(get_print_buffer());
         return EXIT_SUCCESS;
     }
 
+    errno = 0;
     while ((dirp = readdir(dirhandle)))
     {
-        /*fetch each file from directory, until pointer is NULL*/
+        /* fetch each file from directory, until pointer is NULL */
         StatType file_info;
-        get_path_buffer()[0] = '\0';
 
         /* build complete path to file (DIR/FILE) */
         snprintf(get_path_buffer(), get_max_path_length(), "%s/%s", dir_name, dirp->d_name);
-
-        /*get information about the file and catch errors*/
-        if (stat(get_path_buffer(), &file_info) == -1)
+        /* get information about the file and catch errors */
+        if (lstat(get_path_buffer(), &file_info) == -1)
         {
-            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Can not read file status of file %s\n", get_path_buffer());
+            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "lstat() failed: The file %s doesn't exist.\n", get_path_buffer());
             print_error(get_print_buffer());
         }
         else if (S_ISDIR(file_info.st_mode))
         {
-            filter_type(get_path_buffer(), params, &file_info);
-            filter_name(get_path_buffer(), params, &file_info);
-            filter_path(get_path_buffer(), params, &file_info);
-            filter_nouser(get_path_buffer(), params, &file_info);
-            filter_user(get_path_buffer(), params, &file_info);
-
             if ((strcmp(dirp->d_name, "..") != 0 && strcmp(dirp->d_name, ".") != 0))
             {
+                filter_type(get_path_buffer(), params, &file_info);
+                filter_name(get_path_buffer(), params, &file_info);
+                filter_path(get_path_buffer(), params, &file_info);
+                filter_nouser(get_path_buffer(), params, &file_info);
+                filter_user(get_path_buffer(), params, &file_info);
+
 #if DEBUG_OUTPUT
                 snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Move into directory %s.\n", dirp->d_name);
 #endif /* DEBUG_OUTPUT */
@@ -416,14 +432,17 @@ int do_dir(const char* dir_name, const char* const* params)
             filter_path(get_path_buffer(), params, &file_info);
             filter_nouser(get_path_buffer(), params, &file_info);
             filter_user(get_path_buffer(), params, &file_info);
-            /* TODO: print the file as it is wanted due to filter */
-            fprintf(stdout, "File: %s\n", get_path_buffer());
         }
+    }
+    if (0 != errno)
+    {
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "readdir() failed: The dirstream argument is not valid %s\n", dir_name);
+        print_error(get_print_buffer());
     }
 
     if (closedir(dirhandle) < 0)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Can not close directory %s\n", dir_name);
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "closedir() failed: Can not close directory %s\n", dir_name);
         print_error(get_print_buffer());
     }
 
@@ -472,13 +491,13 @@ int init(const char** program_args)
         smax_path = pathconf(".", _PC_PATH_MAX);
         if (-1 == smax_path)
         {
-            print_error("Maximum path length can not be determined.\n");
+            print_error("pathconf() failed: Maximum path length can not be determined.\n");
             return ENODATA;
         }
         spath_buffer = (char*) malloc(smax_path * sizeof(char));
         if (NULL == spath_buffer)
         {
-            print_error("Out of memory.\n");
+            print_error("malloc() failed: Out of memory.\n");
             return ENOMEM;
         }
     }
@@ -565,9 +584,9 @@ int has_no_user(const char* path_to_examine)
 
     /* TODO  Andrea wrote: why returning -1 in case of stat fails, we can continue program anyway. */
 
-    if (stat(path_to_examine, &file_info) == -1)
+    if (lstat(path_to_examine, &file_info) == -1)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Can not read file status o f file %s\n", get_path_buffer());
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "lstat() failed: Can not read file status o f file %s\n", get_path_buffer());
         print_error(get_print_buffer());
         return -1;
     }
@@ -672,7 +691,6 @@ FileType get_file_type_info(const char param)
  *
  * \return void
  */
-
 void filter_name(char* path_to_examine, const char* const * params, StatType* file_info)
 {
     int i = 1;
@@ -885,6 +903,7 @@ void filter_type(const char* path_to_examine, const char* const* params, StatTyp
  * \brief Outputs matching result.
  *
  * \param file_path matching file_path.
+ * \param params are the command line arguments.
  * \param file_info as read from operating system.
  *
  * \return void
@@ -934,7 +953,7 @@ void print_result(const char* file_path, const char* const* params, StatType* fi
 boolean get_file_stat(const char* path_to_examine, StatType* file_info)
 {
     /* TODO Andrea wrote: why always returning TRUE? */
-    if (stat(path_to_examine, file_info) == -1)
+    if (lstat(path_to_examine, file_info) == -1)
     {
         snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Can not read file status of file %s\n", get_path_buffer());
         print_error(get_print_buffer());
@@ -994,8 +1013,15 @@ int get_current_dir(char* buffer_dirname, int* external_buffer_length)
  **/
 void print_file_change_time(const StatType* file_info)
 {
+    size_t written = 0;
     /* Convert the time into the local time format it. */
-    strftime(get_print_buffer(), MAX_PRINT_BUFFER - 1, "%b %d %H:%M", localtime(&file_info->st_mtime));
+    written = strftime(get_print_buffer(), MAX_PRINT_BUFFER - 1, "%b %d %H:%M", localtime(&file_info->st_mtime));
+    if (0 == written)
+    {
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "strftime() failed: Could not print file changed time\n.");
+        print_error(get_print_buffer());
+        return;
+    }
     fprintf(stdout, "%s", get_print_buffer());
 }
 
