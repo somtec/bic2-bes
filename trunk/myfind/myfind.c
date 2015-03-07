@@ -225,10 +225,11 @@ void combine_ls(const StatType* file_info);
  */
 int main(int argc, const char* argv[])
 {
-    int result = EXIT_SUCCESS;
+    int result = EXIT_FAILURE;
     char* start_dir = NULL;
     char* found_dir = NULL;
     StatType stbuf;
+    int current_argument = 0;
 
     result = init(argv);
     if (EXIT_SUCCESS != result)
@@ -243,6 +244,81 @@ int main(int argc, const char* argv[])
         return EXIT_SUCCESS;
     }
 
+    /* check the input arguments first */
+    while (current_argument < argc)
+    {
+        if (0 == strcmp(PARAM_STR_USER, argv[current_argument]))
+        {
+            /* found -user */
+            if (argc > (current_argument + 1))
+            {
+                ++current_argument;
+            }
+            else
+            {
+                print_error("Missing argument to '-user'.\n");
+                cleanup();
+                return EXIT_FAILURE;
+            }
+        }
+
+        if (0 == strcmp(PARAM_STR_NOUSER, argv[current_argument]))
+        {
+            /* found -nouser */
+            ++current_argument;
+        }
+
+        if (0 == strcmp(PARAM_STR_NAME, argv[current_argument]))
+        {
+            /* found -name */
+            if (argc > (current_argument + 1))
+            {
+                ++current_argument;
+            }
+            else
+            {
+                print_error("Missing argument to '-name'.\n");
+                cleanup();
+                return EXIT_FAILURE;
+            }
+        }
+
+        if (0 == strcmp(PARAM_STR_PATH, argv[current_argument]))
+        {
+            /* found -path */
+            if (argc > (current_argument + 1))
+            {
+                ++current_argument;
+            }
+            else
+            {
+                print_error("Missing argument to '-path'.\n");
+                cleanup();
+                return EXIT_FAILURE;
+            }
+        }
+
+
+        if (0 == strcmp(PARAM_STR_TYPE, argv[current_argument]))
+        {
+            /* found -type */
+            if (argc > (current_argument + 1))
+            {
+                /* TODO test if only the allowed flags bp.... are in the next string and only 1 character */
+                ++current_argument;
+            }
+            else
+            {
+                print_error("Missing argument to '-type'.\n");
+                cleanup();
+                return EXIT_FAILURE;
+            }
+        }
+
+
+    }
+
+    /* determine the directory for start */
     get_path_buffer()[0] = '\0';
     start_dir = (char*) malloc(get_max_path_length() * sizeof(char));
     if (NULL == start_dir)
@@ -282,14 +358,14 @@ int main(int argc, const char* argv[])
             return EXIT_FAILURE;
         }
     }
-    do_dir(start_dir, argv);
+    result = do_dir(start_dir, argv);
 
     /* cleanup */
     free(start_dir);
     start_dir = NULL;
     cleanup();
 
-    return EXIT_SUCCESS;
+    return result;
 }
 
 #if DEBUG_OUTPUT != 0
