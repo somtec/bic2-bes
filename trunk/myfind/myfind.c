@@ -3,7 +3,7 @@
  * Betriebssysteme Main file for myfind, which is a reduced find version of Linux.
  * Example 1
  *
- * @author Andrea Maierhofer <andrea.maierhofer@technikum-wien.at>
+ * @author Andrea Maierhofer (aka Windows fangirl) <andrea.maierhofer@technikum-wien.at>
  * @author Reinhard Mayr <reinhard.mayr@technikum-wien.at>
  * @author Thomas Schmid <thomas.schmid@technikum-wien.at>
  * @date 2015/02/15
@@ -28,7 +28,6 @@
 /* TODO
 - Ausgabe -print fehlerhaft, see print_result() gemacht werden;
 - main() 1. Parameter für do_dir() als "." übergeben, falls User mit -argument  startet. Zur Zeit wird der vollständige Pfad ermittelt und übergeben.
-- get_current_dir() sollte ohne malloc() auskommen können;
 - Unused Parameter in den Filter*()- Funktionen entfernen __attribute((unused)) eliminieren;
 - Parsen und herausfinden von falschen  Argumente von Links nach rechts damit die Fehlerausgabe passt und entsprechend das Programm an dieser Stelle abbricht.
 - cleanup() zu cleanup(boolean exit) umbauen.
@@ -121,6 +120,9 @@ typedef enum booleanEnum
     TRUE
 } boolean;
 
+/** Prototype for printing output functions */
+typedef void (*print_detail)(const char* file_path, StatType* file_info);
+
 /*
  * --------------------------------------------------------------- globals --
  */
@@ -183,16 +185,6 @@ static const char* PARAM_STR_LS = "-ls";
 /** User text for supported parameter user. */
 static const char* PARAM_STR_PRINT = "-print";
 
-#if 0
-/** Output strings if parameter can not be determined. */
-static const char* CHECKSTRINGFORPARAMVALUE_INFO_STR_PARAM =
-"The parameter %s needs correct additional information.\n";
-
-/** Output strings if path is missing. */
-static const char* CHECKSTRINGFORPARAMVALUE_INFO_STR_PATH =
-"The path is missing.\n";
-#endif /* 0 */
-
 /* ------------------------------------------------------------- functions --
  */
 
@@ -231,7 +223,9 @@ static void print_error(const char* message);
 static int init(const char** program_args);
 static void cleanup(boolean exit);
 
+#if 0
 static int get_current_dir(char* current_dir, int* external_buffer_length);
+#endif
 
 static int do_file(const char* file_name, StatType* file_info, const char* const * params);
 static int do_dir(const char* dir_name, const char* const * params);
@@ -253,7 +247,10 @@ static void print_file_change_time(const StatType* file_info);
 static void print_file_permissions(const StatType* file_info);
 static void print_user_group(const StatType* file_info);
 
+void print_detail_ls(const char* file_path, StatType* file_info);
+void print_detail_print(const char* file_path, __attribute__((unused)) StatType* file_info);
 static void combine_ls(const StatType* file_info);
+
 
 /**
  *
@@ -743,6 +740,7 @@ static int do_dir(const char* dir_name, const char* const * params)
         {
             if ((strcmp(dirp->d_name, "..") != 0 && strcmp(dirp->d_name, ".") != 0))
             {
+                char* next_path = NULL;
                 do_file(get_path_buffer(), &file_info, params);
 
 #if DEBUG_OUTPUT
@@ -751,7 +749,29 @@ static int do_dir(const char* dir_name, const char* const * params)
 #endif /* DEBUG_OUTPUT */
                 debug_print(get_print_buffer());
                 /* recursion for each directory in current directory */
-                do_dir(get_path_buffer(), params);
+                next_path = (char*) malloc(get_max_path_length() * sizeof(char));
+                if (NULL == next_path)
+                {
+                    print_error("malloc() failed: Out of memory.\n");
+                    if (closedir(dirhandle) < 0)
+                    {
+                        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "closedir() failed: Can not close directory %s\n", dir_name);
+                        print_error(get_print_buffer());
+                    }
+                    return EXIT_FAILURE;
+                }
+                strcpy(next_path, get_path_buffer());
+                if (EXIT_FAILURE == do_dir(next_path, params))
+                {
+                    if (closedir(dirhandle) < 0)
+                    {
+                        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "closedir() failed: Can not close directory %s\n", dir_name);
+                        print_error(get_print_buffer());
+                    }
+                    free(next_path);
+                    return EXIT_FAILURE;
+                }
+                free(next_path);
             }
         }
         else
@@ -1178,82 +1198,32 @@ static boolean filter_type(__attribute__((unused)) const char* path_to_examine, 
  */
 static void print_result(const char* file_path, __attribute__((unused)) const char* const * params, StatType* file_info)
 {
-    char* buffer_current_dir = NULL;
-    int buffer_size = 0;
-    int length = 0;
+    print_detail functions[2];
+    int outputs = 1;
+    int i = 0;
+
+    functions[0] = print_detail_print;
+    functions[1] = print_detail_print;
 
     /* check for -ls option */
     if (get_argument_index_ls() >= 0)
     {
-        combine_ls(file_info);
-        printf(" ");
+        outputs = 2;
+        if (get_argument_index_print() >= get_argument_index_ls())
+        {
+            functions[0] = &print_detail_ls;
+        }
+        else
+        {
+            functions[1] = &print_detail_ls;
+        }
+    }
+    for (i = 0; i < outputs; ++i)
+    {
+        (functions[i])(file_path, file_info);
     }
 
-    /* check for -print option */
-    if (get_argument_index_print() >= 0)
-    {
-        /* TODO Andrea schreibt -print an richtige Stelle schieben */
-        /* mit der richtigen -print funktion */
-        /*combine_ls(file_info);*/
-        printf(" ");
-    }
-
-    length = get_current_dir(buffer_current_dir, &buffer_size);
-    if (length)
-    {
-        /* working path and file_path begin with same part */
-        printf(".%s\n", file_path + length * sizeof(char));
-    }
-    else
-    {
-        /* working path and file_path have no common part */
-        printf("%s\n", file_path);
-    }
-    free(buffer_current_dir);
     return;
-}
-
-/**
- * \brief Retrieves length and name of current directory.
- *
- * \param buffer_dirname character pointer to string buffer for path or NULL
- *        if buffer_dirname is NULL a buffer will be created and returned in buffer_dirname
- * \param external_buffer_length pointer to integer with length of buffer_dirname
- * \return int length of directory in buffer or 0 in case of failure.
- */
-int get_current_dir(char* buffer_dirname, int* external_buffer_length)
-{
-    int need_buffer = 0;
-    int buffer_length = 0;
-    need_buffer = (NULL == buffer_dirname);
-
-    if (need_buffer)
-    {
-        buffer_length = get_max_path_length() * sizeof(char);
-        buffer_dirname = (char*) malloc(buffer_length);
-        *external_buffer_length = buffer_length;
-    }
-    else
-    {
-        buffer_length = *external_buffer_length;
-    }
-
-    if (NULL == buffer_dirname)
-    {
-        if (need_buffer)
-            free(buffer_dirname);
-        buffer_dirname = NULL;
-        print_error("could not allocate memory.\n");
-        return 0;
-    }
-    if (NULL == getcwd(buffer_dirname, buffer_length))
-    {
-        if (need_buffer)
-            free(buffer_dirname);
-        buffer_dirname = NULL;
-        return 0;
-    }
-    return strlen(buffer_dirname);
 }
 
 /**
@@ -1387,6 +1357,34 @@ static void print_user_group(const StatType* file_info)
     {
         fprintf(stdout, "%5d", file_info->st_gid);
     }
+}
+
+/**
+ * \brief Print the detailed info of matched file.
+ *
+ * \param file_path Fully qualified file name with path read out from operating system.
+ * \param file_info with all file attributes read out from operating system.
+ *
+ * \return void
+ **/
+void print_detail_ls(const char* file_path, StatType* file_info)
+{
+    combine_ls(file_info);
+    printf(" ");
+    printf("%s\n", file_path);
+}
+
+/**
+ * \brief Standard print, used by every match.
+ *
+ * \param file_path Fully qualified file name with path read out from operating system.
+ * \param file_info with all file attributes read out from operating system.
+ *
+ * \return void
+ **/
+void print_detail_print(const char* file_path, __attribute__((unused)) StatType* file_info)
+{
+    printf("%s\n", file_path);
 }
 
 /**
