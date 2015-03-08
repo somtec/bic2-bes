@@ -21,6 +21,21 @@
  * -------------------------------------------------------------- includes --
  */
 /* TODO printf and fprintf error handling is not implemented till now. */
+/* TODO abort operation if command is parsed successfully or give an error if there /
+ * are superfluous arguments.
+ */
+
+/* TODO
+- Ausgabe -print fehlerhaft, see print_result() gemacht werden;
+- main() 1. Parameter für do_dir() als "." übergeben, falls User mit -argument  startet. Zur Zeit wird der vollständige Pfad ermittelt und übergeben.
+- get_current_dir() sollte ohne malloc() auskommen können;
+- Unused Parameter in den Filter*()- Funktionen entfernen __attribute((unused)) eliminieren;
+- Parsen und herausfinden von falschen  Argumente von Links nach rechts damit die Fehlerausgabe passt und entsprechend das Programm an dieser Stelle abbricht.
+- cleanup() zu cleanup(boolean exit) umbauen.
+Wenn der Parameter exit gesetzt ist, das Programm direkt in cleanup(TRUE) beenden mit exit(EXIT_FAILURE).
+- Review unseres Programms und fehlendes Errorhandling einbauen z. B. in get_current_dir() wird ein OutOfMemory nicht behandelt.
+Abfragen der globalen Variablen errno nach bestimmten Systemaufrufen;
+*/
 
 #include <stdio.h>
 #include <string.h>
@@ -49,6 +64,7 @@
  * -------------------------------------------------------------- typedefs --
  */
 
+#if 0
 /**
  The enumeration of available parameters for myfind.
  */
@@ -64,6 +80,7 @@ typedef enum ParametersEnum
     PRINT, /** Print the name of the directory entry. */
     HELP /* Print usage like all Linux bash commands. */
 } Parameters;
+#endif
 
 /**
  The enumeration of filtered file type .
@@ -212,7 +229,7 @@ inline static void set_argument_index_print(int);
 static void print_usage(void);
 static void print_error(const char* message);
 static int init(const char** program_args);
-static void cleanup(void);
+static void cleanup(boolean exit);
 
 static int get_current_dir(char* current_dir, int* external_buffer_length);
 
@@ -263,8 +280,7 @@ int main(int argc, const char* argv[])
     result = init(argv);
     if (EXIT_SUCCESS != result)
     {
-        cleanup();
-        return EXIT_FAILURE;
+        cleanup(TRUE);
     }
 
     if (argc <= 1)
@@ -287,8 +303,7 @@ int main(int argc, const char* argv[])
             else
             {
                 print_error("Missing argument to '-user'.\n");
-                cleanup();
-                return EXIT_FAILURE;
+                cleanup(TRUE);
             }
         }
 
@@ -321,8 +336,7 @@ int main(int argc, const char* argv[])
             else
             {
                 print_error("Missing argument to '-name'.\n");
-                cleanup();
-                return EXIT_FAILURE;
+                cleanup(TRUE);
             }
         }
 
@@ -337,8 +351,7 @@ int main(int argc, const char* argv[])
             else
             {
                 print_error("Missing argument to '-path'.\n");
-                cleanup();
-                return EXIT_FAILURE;
+                cleanup(TRUE);
             }
         }
 
@@ -370,8 +383,7 @@ int main(int argc, const char* argv[])
             else
             {
                 print_error("Missing argument to '-type'.\n");
-                cleanup();
-                return EXIT_FAILURE;
+                cleanup(TRUE);
             }
         }
 
@@ -387,8 +399,7 @@ int main(int argc, const char* argv[])
         free(start_dir);
         start_dir = NULL;
         print_error("malloc() failed: Out of memory.\n");
-        cleanup();
-        return EXIT_FAILURE;
+        cleanup(TRUE);
     }
 
     /* build complete path to file (DIR/FILE) */
@@ -415,9 +426,8 @@ int main(int argc, const char* argv[])
             print_error("getcwd() failed: Can not determine current working directory.");
             free(start_dir);
             start_dir = NULL;
-            cleanup();
             /* I/O error */
-            return EXIT_FAILURE;
+            cleanup(TRUE);
         }
     }
     result = do_dir(start_dir, argv);
@@ -425,7 +435,7 @@ int main(int argc, const char* argv[])
     /* cleanup */
     free(start_dir);
     start_dir = NULL;
-    cleanup();
+    cleanup(FALSE);
 
     return result;
 }
@@ -844,9 +854,11 @@ int init(const char** program_args)
 /**
  * \brief Cleanup the program.
  *
+ * \params exit_program when set exit program immediately with EXIT_FAILURE.
+ *
  * \return void
  */
-void cleanup(void)
+void cleanup(boolean exit_program)
 {
     free(spath_buffer);
     spath_buffer = NULL;
@@ -859,6 +871,12 @@ void cleanup(void)
 
     fflush(stderr);
     fflush(stdout);
+
+    if (exit_program)
+    {
+        exit(EXIT_FAILURE);
+    }
+
 }
 
 /**
