@@ -26,13 +26,11 @@
  */
 
 /* TODO
-- Ausgabe -print fehlerhaft, see print_result() gemacht werden;
 - main() 1. Parameter für do_dir() als "." übergeben, falls User mit -argument  startet. Zur Zeit wird der vollständige Pfad ermittelt und übergeben.
 - Unused Parameter in den Filter*()- Funktionen entfernen __attribute((unused)) eliminieren;
 - Parsen und herausfinden von falschen  Argumente von Links nach rechts damit die Fehlerausgabe passt und entsprechend das Programm an dieser Stelle abbricht.
-- cleanup() zu cleanup(boolean exit) umbauen.
 Wenn der Parameter exit gesetzt ist, das Programm direkt in cleanup(TRUE) beenden mit exit(EXIT_FAILURE).
-- Review unseres Programms und fehlendes Errorhandling einbauen z. B. in get_current_dir() wird ein OutOfMemory nicht behandelt.
+- Review unseres Programms und fehlendes Errorhandling einbauen
 Abfragen der globalen Variablen errno nach bestimmten Systemaufrufen;
 */
 
@@ -62,24 +60,6 @@ Abfragen der globalen Variablen errno nach bestimmten Systemaufrufen;
 /*
  * -------------------------------------------------------------- typedefs --
  */
-
-#if 0
-/**
- The enumeration of available parameters for myfind.
- */
-typedef enum ParametersEnum
-{
-    NONE, /** myfind without any parameters. */
-    USER, /** Only files by this user. */
-    NOUSER, /** Only files which have no user. */
-    NAME, /** Files with the given filename pattern. */
-    PATH, /** Start path where myfind should start. */
-    TYPE, /** Type of Linux file system types. */
-    LS, /** Print like in Linux LS output. */
-    PRINT, /** Print the name of the directory entry. */
-    HELP /* Print usage like all Linux bash commands. */
-} Parameters;
-#endif
 
 /**
  The enumeration of filtered file type .
@@ -223,10 +203,6 @@ static void print_error(const char* message);
 static int init(const char** program_args);
 static void cleanup(boolean exit);
 
-#if 0
-static int get_current_dir(char* current_dir, int* external_buffer_length);
-#endif
-
 static int do_file(const char* file_name, StatType* file_info, const char* const * params);
 static int do_dir(const char* dir_name, const char* const * params);
 static void print_result(const char* file_path, const char* const * params, StatType* file_info);
@@ -235,7 +211,6 @@ static boolean user_exist(const char* user_name);
 static boolean has_no_user(StatType* file_info);
 
 static char get_file_type(const StatType* file_info);
-/*static FileType get_file_type_info(const char param);*/
 
 static boolean filter_name(const char* path_to_examine, const char* const * params, StatType* file_info);
 static boolean filter_path(const char* path_to_examine, const char* const * params, StatType* file_info);
@@ -385,7 +360,6 @@ int main(int argc, const char* argv[])
         }
 
         ++current_argument;
-
     }
 
     /* determine the directory for start */
@@ -932,7 +906,7 @@ static boolean user_exist(const char* user_name)
 
     if (NULL != pwd)
     {
-        return TRUE;
+        return FALSE;
     }
 
     /* is it a user id instead of a user name? */
@@ -1158,7 +1132,12 @@ static boolean filter_user(__attribute__((unused)) const char* path_to_examine, 
         return TRUE;
     }
 
-    return user_exist(params[get_argument_index_user() + 1]);
+    if (FALSE == user_exist(params[get_argument_index_user() + 1]))
+    {
+
+        cleanup(TRUE);
+    }
+    return TRUE;
 }
 
 /**
