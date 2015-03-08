@@ -223,8 +223,8 @@ static void print_result(const char* file_path, const char* const * params, Stat
 static boolean user_exist(const char* user_name);
 static boolean has_no_user(StatType* file_info);
 
-static FileType get_file_type(const StatType* file_info);
-static FileType get_file_type_info(const char param);
+static char get_file_type(const StatType* file_info);
+/*static FileType get_file_type_info(const char param);*/
 
 static boolean filter_name(const char* path_to_examine, const char* const * params, StatType* file_info);
 static boolean filter_path(const char* path_to_examine, const char* const * params, StatType* file_info);
@@ -935,45 +935,46 @@ static boolean has_no_user(StatType* file_info)
  *
  * \param file_info as from file system.
  *
- * \return FileType the file type enumerator.
+ * \return char representing file type .
  */
-static FileType get_file_type(const StatType* file_info)
+static char get_file_type(const StatType* file_info)
 {
 
-    FileType result = FILE_TYPE_UNKNOWN;
+    char result = '-';
 
     if (S_ISBLK(file_info->st_mode))
     {
-        result = FILE_TYPE_BLOCK;
+        result = 'b';
     }
     else if (S_ISREG(file_info->st_mode))
     {
-        result = FILE_TYPE_FILE;
+        result = 'f';
     }
     else if (S_ISCHR(file_info->st_mode))
     {
-        result = FILE_TYPE_CHAR;
+        result = 'c';
     }
     else if (S_ISDIR(file_info->st_mode))
     {
-        result = FILE_TYPE_DIRECTORY;
+        result = 'd';
     }
     else if (S_ISFIFO(file_info->st_mode))
     {
-        result = FILE_TYPE_PIPE;
+        result = 'p';
     }
     else if (S_ISLNK(file_info->st_mode))
     {
-        result = FILE_TYPE_LINK;
+        result = 'l';
     }
     else if (S_ISSOCK(file_info->st_mode))
     {
-        result = FILE_TYPE_SOCKET;
+        result = 's';
     }
     return result;
 
 }
 
+#if 0
 /**
  * \brief Query file type of given character.
  *
@@ -1016,6 +1017,7 @@ static FileType get_file_type_info(const char param)
 
     return result;
 }
+#endif
 
 /**
  * \brief Filters the directory entry due to -name  parameter.
@@ -1144,7 +1146,7 @@ static boolean filter_type(__attribute__((unused)) const char* path_to_examine, 
 
     parameter1 = params[get_argument_index_type() + 1];
     /* check if option argument describes the same file type as file to examine has */
-    return (get_file_type_info(*parameter1) == get_file_type(file_info));
+    return (*parameter1 == get_file_type(file_info));
 }
 
 /**
@@ -1174,7 +1176,7 @@ static void print_result(const char* file_path, __attribute__((unused)) const ch
     {
         /* TODO Andrea schreibt -print an richtige Stelle schieben */
         /* mit der richtigen -print funktion */
-        combine_ls(file_info);
+        /*combine_ls(file_info);*/
         printf(" ");
     }
 
@@ -1186,7 +1188,7 @@ static void print_result(const char* file_path, __attribute__((unused)) const ch
     }
     else
     {
-        /* working path and file_pat have no common part */
+        /* working path and file_path have no common part */
         printf("%s\n", file_path);
     }
     free(buffer_current_dir);
@@ -1344,11 +1346,11 @@ static void print_user_group(const StatType* file_info)
     password = getpwuid(file_info->st_uid);
     if (NULL != password)
     {
-        fprintf(stdout, "%s", password->pw_name);
+        fprintf(stdout, "%5s", password->pw_name);
     }
     else
     {
-        fprintf(stdout, "%d", file_info->st_uid);
+        fprintf(stdout, "%5d", file_info->st_uid);
     }
 
     fprintf(stdout, " ");
@@ -1357,15 +1359,15 @@ static void print_user_group(const StatType* file_info)
     group_info = getgrgid(file_info->st_gid);
     if (NULL != password)
     {
-        fprintf(stdout, "%s", group_info->gr_name);
+        fprintf(stdout, "%5s", group_info->gr_name);
     }
     else if (NULL != group_info)
     {
-        fprintf(stdout, "%s", group_info->gr_name);
+        fprintf(stdout, "%5s", group_info->gr_name);
     }
     else
     {
-        fprintf(stdout, "%d", file_info->st_gid);
+        fprintf(stdout, "%5d", file_info->st_gid);
     }
 }
 
@@ -1384,7 +1386,8 @@ static void combine_ls(const StatType* file_info)
     fprintf(stdout, "%8lu    ", (unsigned long) file_info->st_ino);
 
     /* Print blocks */
-    fprintf(stdout, "%2lu  ", (unsigned long) file_info->st_blocks / 2);
+
+    fprintf(stdout, "%3lu  ", (unsigned long) file_info->st_blocks / 2);
 
     /* Print permissions */
     print_file_permissions(file_info);
