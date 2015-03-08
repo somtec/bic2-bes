@@ -10,9 +10,9 @@
  *
  * @version SVN $Revision: 64$
  *
- * @TODO Test it more seriously and more complete.
- * @TODO Review it for missing error checks.
- * @TODO Review it and check the source against the rules at
+ * TODO Test it more seriously and more complete.
+ * TODO Review it for missing error checks.
+ * TODO Review it and check the source against the rules at
  *       https://cis.technikum-wien.at/documents/bic/2/bes/semesterplan/lu/c-rules.html
  *
  */
@@ -23,6 +23,7 @@
 /* TODO printf and fprintf error handling is not implemented till now. */
 /* TODO abort operation if command is parsed successfully or give an error if there /
  * are superfluous arguments.
+ * TODO check why -name param not working
  */
 
 /* TODO
