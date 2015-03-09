@@ -29,6 +29,9 @@
 /* TODO Test it more seriously and more complete. */
 /* TODO Review it and check the source against the rules at /
  *       https://cis.technikum-wien.at/documents/bic/2/bes/semesterplan/lu/c-rules.html
+ *
+ * TODO supress ls output for character and block files
+ * TODO examine when to devide by 2 for blocks
 */
 
 /*
@@ -184,13 +187,11 @@ inline static char* get_print_buffer(void);
 inline static const char* get_program_argument_0(void);
 inline static char* get_path_buffer(void);
 
-inline static int get_argument_index_user(void);
-inline static int get_argument_index_nouser(void);
-inline static int get_argument_index_name(void);
-inline static int get_argument_index_path(void);
-inline static int get_argument_index_type(void);
+
+#if 0
 inline static int get_argument_index_ls(void);
 inline static int get_argument_index_print(void);
+#endif
 inline static void set_argument_index_user(int);
 inline static void set_argument_index_nouser(int);
 inline static void set_argument_index_name(int);
@@ -206,7 +207,7 @@ static void cleanup(boolean exit);
 
 static int do_file(const char* file_name, StatType* file_info, const char* const * params);
 static int do_dir(const char* dir_name, const char* const * params);
-static void print_result(const char* file_path, StatType* file_info);
+static void print_result(const char* file_path, StatType* file_info, const char* const * params);
 
 static boolean user_exist(const char* user_name);
 static boolean has_no_user(StatType* file_info);
@@ -229,7 +230,7 @@ static void print_file_permissions(const StatType* file_info);
 static void print_user_group(const StatType* file_info);
 
 static void print_detail_ls(const char* file_path, StatType* file_info);
-static void print_detail_print(const char* file_path, __attribute__((unused)) StatType* file_info);
+static void print_detail_print(const char* file_path);
 static void combine_ls(const StatType* file_info);
 
 
@@ -328,7 +329,7 @@ int main(int argc, const char* argv[])
             }
             else
             {
-                print_error("Missing argument to '-path'.\n");
+                print_error("Missing argument to `-path'.\n");
                 cleanup(TRUE);
             }
         }
@@ -535,6 +536,8 @@ inline static int get_argument_index_type(void)
     return sargument_index_type;
 }
 
+
+#if 0
 /**
  *
  * \brief Get index of -ls argument.
@@ -556,7 +559,7 @@ inline static int get_argument_index_print(void)
 {
     return sargument_index_print;
 }
-
+#endif
 /**
  *
  * \brief Set index of -user argument.
@@ -781,7 +784,7 @@ static int do_file(const char* file_name, StatType* file_info, const char* const
             && filter_path(file_name, params, file_info) && filter_nouser(file_name, params, file_info)
             && filter_user(file_name, params, file_info))
     {
-        print_result(file_name, file_info);
+        print_result(file_name, file_info, params);
     }
 
     return EXIT_SUCCESS;
@@ -959,7 +962,7 @@ static char get_file_type(const StatType* file_info)
     }
     else if (S_ISREG(file_info->st_mode))
     {
-        result = 'f';
+        result = '-';
     }
     else if (S_ISCHR(file_info->st_mode))
     {
@@ -1173,8 +1176,44 @@ static boolean filter_type(__attribute__((unused)) const char* path_to_examine, 
  *
  * \return void
  */
-static void print_result(const char* file_path, StatType* file_info)
+/**
+ * \brief Outputs matching result.
+ *
+ * \param file_path matching file_path.
+ * \param params are the command line arguments.
+ * \param file_info as read from operating system.
+ *
+ * \return void
+ */
+static void print_result(const char* file_path, StatType* file_info, const char* const * params)
 {
+    int i = 1;
+    boolean printed_print = FALSE;
+    boolean printed_ls = FALSE;
+
+    /* check for -ls option */
+    while (params[i] != NULL)
+    {
+        if (strcmp(params[i], PARAM_STR_LS) == 0)
+        {
+            print_detail_ls(file_path, file_info);
+            printed_ls = TRUE;
+        }
+        if (strcmp(params[i], PARAM_STR_PRINT) == 0)
+        {
+            print_detail_print(file_path);
+            printed_print = TRUE;
+        }
+        i++;
+    }
+
+    if (!printed_print && !printed_ls)
+    {
+        print_detail_print(file_path);
+    }
+
+
+#if 0
     print_detail print_function[2];
     int outputs = 1;
     int i = 0;
@@ -1202,9 +1241,11 @@ static void print_result(const char* file_path, StatType* file_info)
         /* now print the output in the right order of option arguments */
         (print_function[i])(file_path, file_info);
     }
+#endif /* 0 */
 
     return;
 }
+
 
 /**
  * \brief Print out last changed date of file on standard output.
@@ -1367,7 +1408,7 @@ static void print_detail_ls(const char* file_path, StatType* file_info)
  *
  * \return void
  **/
-static void print_detail_print(const char* file_path, __attribute__((unused)) StatType* file_info)
+static void print_detail_print(const char* file_path)
 {
     printf("%s\n", file_path);
 }
