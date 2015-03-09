@@ -8,29 +8,33 @@
  * @author Thomas Schmid <thomas.schmid@technikum-wien.at>
  * @date 2015/02/15
  *
- * @version SVN $Revision: 64$
- *
- * TODO Test it more seriously and more complete.
- * TODO Review it for missing error checks.
- * TODO Review it and check the source against the rules at
- *       https://cis.technikum-wien.at/documents/bic/2/bes/semesterplan/lu/c-rules.html
+ * @version SVN $Revision: 64$*
  *
  */
 
 /*
+ * -------------------------------------------------------------- review --
+ */
+
+/* TODO Remove Unused Parameter in Filter*()- functions /
+    __attribute((unused)) eliminieren */
+/* TODO abort operation if command is parsed successfully or give an error if there are superfluous arguments. /
+        Parsen und herausfinden von falschen  Argumente von Links nach rechts
+        damit die Fehlerausgabe passt und entsprechend das Programm an dieser Stelle abbricht.
+*/
+/* TODO printf and fprintf error handling is not implemented till now. /
+        Review unseres Programms und fehlendes Errorhandling einbauen /
+        Abfragen der globalen Variablen errno nach bestimmten Systemaufrufen;
+*/
+/* TODO Test it more seriously and more complete. */
+/* TODO Review it and check the source against the rules at /
+ *       https://cis.technikum-wien.at/documents/bic/2/bes/semesterplan/lu/c-rules.html
+*/
+
+/*
  * -------------------------------------------------------------- includes --
  */
-/* TODO printf and fprintf error handling is not implemented till now. */
-/* TODO abort operation if command is parsed successfully or give an error if there /
-   are superfluous arguments.
-*/
-/* TODO
-- Unused Parameter in den Filter*()- Funktionen entfernen __attribute((unused)) eliminieren;
-- Parsen und herausfinden von falschen  Argumente von Links nach rechts damit die Fehlerausgabe passt und entsprechend das Programm an dieser Stelle abbricht.
-  Wenn der Parameter exit gesetzt ist, das Programm direkt in cleanup(TRUE) beenden mit exit(EXIT_FAILURE).
-- Review unseres Programms und fehlendes Errorhandling einbauen
-  Abfragen der globalen Variablen errno nach bestimmten Systemaufrufen;
-*/
+
 
 #include <stdio.h>
 #include <string.h>
@@ -1175,6 +1179,7 @@ static void print_result(const char* file_path, StatType* file_info)
     int outputs = 1;
     int i = 0;
 
+    /* set function pointers for printing out the different output formats. */
     print_function[0] = print_detail_print;
     print_function[1] = print_detail_print;
 
