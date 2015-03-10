@@ -233,6 +233,7 @@ static void print_detail_ls(const char* file_path, StatType* file_info);
 static void print_detail_print(const char* file_path);
 static void combine_ls(const StatType* file_info);
 
+boolean parameters_valid(const char * const  * params);
 
 /**
  *
@@ -252,6 +253,7 @@ int main(int argc, const char* argv[])
     int result = EXIT_FAILURE;
     char* start_dir = NULL;
     char* found_dir = NULL;
+
     StatType stbuf;
     int current_argument = 1; /* the first argument is the program name anyway */
     int test_char = '\0';
@@ -268,6 +270,8 @@ int main(int argc, const char* argv[])
         return EXIT_SUCCESS;
     }
 
+
+
     /* check the input arguments first */
     while (current_argument < argc)
     {
@@ -277,11 +281,12 @@ int main(int argc, const char* argv[])
             if ((current_argument + 1) < argc)
             {
                 set_argument_index_user(current_argument);
-                ++current_argument;
+                current_argument+=2;
+                continue;
             }
             else
             {
-                print_error("Missing argument to '-user'.\n");
+                print_error("Missing argument to `-user'.\n");
                 cleanup(TRUE);
             }
         }
@@ -310,11 +315,12 @@ int main(int argc, const char* argv[])
             if (argc > (current_argument + 1))
             {
                 set_argument_index_name(current_argument);
-                ++current_argument;
+                current_argument+=2;
+                continue;
             }
             else
             {
-                print_error("Missing argument to '-name'.\n");
+                print_error("Missing argument to `-name'.\n");
                 cleanup(TRUE);
             }
         }
@@ -325,7 +331,8 @@ int main(int argc, const char* argv[])
             if (argc > (current_argument + 1))
             {
                 set_argument_index_path(current_argument);
-                ++current_argument;
+                current_argument+=2;
+                continue;
             }
             else
             {
@@ -357,13 +364,22 @@ int main(int argc, const char* argv[])
                     return EXIT_FAILURE;
                 }
                 set_argument_index_type(current_argument);
-                ++current_argument;
+                current_argument+=2;
+                continue;
             }
             else
             {
-                print_error("Missing argument to '-type'.\n");
+                print_error("Missing argument to `-type'.\n");
                 cleanup(TRUE);
             }
+        }
+
+        if(current_argument > 1 ){
+        	/* we have an unknown option */
+        	snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+        	    "invalid predicate `%s'\n.", argv[current_argument]);
+        	print_error(get_print_buffer());
+            cleanup(TRUE);
         }
 
         ++current_argument;
@@ -390,16 +406,17 @@ int main(int argc, const char* argv[])
         {
             found_dir = get_path_buffer();
             strcpy(start_dir, found_dir);
+            if (NULL == found_dir)
+            {
+                /* use current directory */
+                strcpy(start_dir,".");
+            }
+            result = do_dir(start_dir, argv);
+        }
+        else {
+            result = do_file(argv[1], &stbuf, argv);
         }
     }
-
-
-    if (NULL == found_dir)
-    {
-        /* use current directory */
-        strcpy(start_dir,".");
-    }
-    result = do_dir(start_dir, argv);
 
     /* cleanup */
     free(start_dir);
@@ -1442,6 +1459,16 @@ static void combine_ls(const StatType* file_info)
 
     print_file_change_time(file_info);
 }
+
+boolean parameters_valid(const char * const  * params){
+	int i = 0;
+	while(params[i] != '\0') {
+
+	}
+
+	return TRUE;
+}
+
 /*
  * =================================================================== eof ==
  */
