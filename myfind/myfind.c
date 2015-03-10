@@ -17,27 +17,26 @@
  */
 
 /* TODO Remove Unused Parameter in Filter*()- functions /
-    __attribute((unused)) eliminieren */
+ __attribute((unused)) eliminieren */
 /* TODO abort operation if command is parsed successfully or give an error if there are superfluous arguments. /
-        Parsen und herausfinden von falschen  Argumente von Links nach rechts
-        damit die Fehlerausgabe passt und entsprechend das Programm an dieser Stelle abbricht.
-*/
+ Parsen und herausfinden von falschen  Argumente von Links nach rechts
+ damit die Fehlerausgabe passt und entsprechend das Programm an dieser Stelle abbricht.
+ */
 /* TODO printf and fprintf error handling is not implemented till now. /
-        Review unseres Programms und fehlendes Errorhandling einbauen /
-        Abfragen der globalen Variablen errno nach bestimmten Systemaufrufen;
-*/
+ Review unseres Programms und fehlendes Errorhandling einbauen /
+ Abfragen der globalen Variablen errno nach bestimmten Systemaufrufen;
+ */
 /* TODO Test it more seriously and more complete. */
 /* TODO Review it and check the source against the rules at /
  *       https://cis.technikum-wien.at/documents/bic/2/bes/semesterplan/lu/c-rules.html
  *
  * TODO supress ls output for character and block files
  * TODO examine when to devide by 2 for blocks
-*/
+ */
 
 /*
  * -------------------------------------------------------------- includes --
  */
-
 
 #include <stdio.h>
 #include <string.h>
@@ -137,21 +136,6 @@ static char* sprint_buffer = NULL;
 /** Want to convert user id number into decimal number. */
 static const int USERID_BASE = 10;
 
-/** Index of -user argument, -1 if not present. */
-static int sargument_index_user = -1;
-/** Index of -nouser argument, -1 if not present. */
-static int sargument_index_nouser = -1;
-/** Index of -name argument, -1 if not present. */
-static int sargument_index_name = -1;
-/** Index of -path argument, -1 if not present. */
-static int sargument_index_path = -1;
-/** Index of -type argument, -1 if not present. */
-static int sargument_index_type = -1;
-/** Index of -ls argument, -1 if not present. */
-static int sargument_index_ls = -1;
-/** Index of -print argument, -1 if not present. */
-static int sargument_index_print = -1;
-
 /** User text string for supported parameter user. */
 static const char* PARAM_STR_USER = "-user";
 /** User text string for supported parameter nouser. */
@@ -168,6 +152,9 @@ static const char* PARAM_STR_TYPE_VALS = "bcdflps";
 static const char* PARAM_STR_LS = "-ls";
 /** User text for supported parameter user. */
 static const char* PARAM_STR_PRINT = "-print";
+
+/** The user has given a directory after the program name */
+static int parameter_directory_given = TRUE;
 
 /* ------------------------------------------------------------- functions --
  */
@@ -187,19 +174,6 @@ inline static char* get_print_buffer(void);
 inline static const char* get_program_argument_0(void);
 inline static char* get_path_buffer(void);
 
-
-#if 0
-inline static int get_argument_index_ls(void);
-inline static int get_argument_index_print(void);
-#endif
-inline static void set_argument_index_user(int);
-inline static void set_argument_index_nouser(int);
-inline static void set_argument_index_name(int);
-inline static void set_argument_index_path(int);
-inline static void set_argument_index_type(int);
-inline static void set_argument_index_ls(int);
-inline static void set_argument_index_print(int);
-
 static void print_usage(void);
 static void print_error(const char* message);
 static int init(const char** program_args);
@@ -207,22 +181,24 @@ static void cleanup(boolean exit);
 
 static int do_file(const char* file_name, StatType* file_info, const char* const * params);
 static int do_dir(const char* dir_name, const char* const * params);
+#if 0
 static void print_result(const char* file_path, StatType* file_info, const char* const * params);
+#endif
 
 static boolean user_exist(const char* user_name);
 static boolean has_no_user(StatType* file_info);
 
 static char get_file_type(const StatType* file_info);
 
-static boolean filter_name(const char* path_to_examine, const char* const * params,
+static boolean filter_name(const char* path_to_examine, const int current_param, const char* const * params,
         StatType* file_info);
-static boolean filter_path(const char* path_to_examine, const char* const * params,
+static boolean filter_path(const char* path_to_examine, const int current_param, const char* const * params,
         __attribute__((unused)) StatType* file_info);
-static boolean filter_nouser(const char* path_to_examine, const char* const * params,
+static boolean filter_nouser(const char* path_to_examine, const int current_param, const char* const * params,
         StatType* file_info);
-static boolean filter_user(const char* path_to_examine, const char* const * params,
+static boolean filter_user(const char* path_to_examine, const int current_param, const char* const * params,
         StatType* file_info);
-static boolean filter_type(const char* path_to_examine, const char* const * params,
+static boolean filter_type(const char* path_to_examine, const int current_param, const char* const * params,
         StatType* file_info);
 
 static void print_file_change_time(const StatType* file_info);
@@ -233,9 +209,9 @@ static void print_detail_ls(const char* file_path, StatType* file_info);
 static void print_detail_print(const char* file_path);
 static void combine_ls(const StatType* file_info);
 
-boolean parameters_valid(const char * const  * params);
-
-/**
+#if 0
+static boolean parameters_valid(const char * const * params);
+#endif/**
  *
  * \brief main implements a a simple replacement for Linux find.
  *
@@ -270,8 +246,6 @@ int main(int argc, const char* argv[])
         return EXIT_SUCCESS;
     }
 
-
-
     /* check the input arguments first */
     while (current_argument < argc)
     {
@@ -280,8 +254,7 @@ int main(int argc, const char* argv[])
             /* found -user */
             if ((current_argument + 1) < argc)
             {
-                set_argument_index_user(current_argument);
-                current_argument+=2;
+                current_argument += 2;
                 continue;
             }
             else
@@ -291,31 +264,12 @@ int main(int argc, const char* argv[])
             }
         }
 
-        if (0 == strcmp(PARAM_STR_NOUSER, argv[current_argument]))
-        {
-            /* found -nouser */
-            set_argument_index_nouser(current_argument);
-        }
-
-        if (0 == strcmp(PARAM_STR_LS, argv[current_argument]))
-        {
-            /* found -ls */
-            set_argument_index_ls(current_argument);
-        }
-
-        if (0 == strcmp(PARAM_STR_PRINT, argv[current_argument]))
-        {
-            /* found -print */
-            set_argument_index_print(current_argument);
-        }
-
         if (0 == strcmp(PARAM_STR_NAME, argv[current_argument]))
         {
             /* found -name */
             if (argc > (current_argument + 1))
             {
-                set_argument_index_name(current_argument);
-                current_argument+=2;
+                current_argument += 2;
                 continue;
             }
             else
@@ -330,8 +284,7 @@ int main(int argc, const char* argv[])
             /* found -path */
             if (argc > (current_argument + 1))
             {
-                set_argument_index_path(current_argument);
-                current_argument+=2;
+                current_argument += 2;
                 continue;
             }
             else
@@ -363,8 +316,7 @@ int main(int argc, const char* argv[])
                     print_error(get_print_buffer());
                     return EXIT_FAILURE;
                 }
-                set_argument_index_type(current_argument);
-                current_argument+=2;
+                current_argument += 2;
                 continue;
             }
             else
@@ -374,11 +326,11 @@ int main(int argc, const char* argv[])
             }
         }
 
-        if(current_argument > 1 ){
-        	/* we have an unknown option */
-        	snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-        	    "invalid predicate `%s'\n.", argv[current_argument]);
-        	print_error(get_print_buffer());
+        if (current_argument > 1)
+        {
+            /* we have an unknown option */
+            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "invalid predicate `%s'\n.", argv[current_argument]);
+            print_error(get_print_buffer());
             cleanup(TRUE);
         }
 
@@ -399,6 +351,7 @@ int main(int argc, const char* argv[])
     /* build complete path to file (DIR/FILE) */
     snprintf(get_path_buffer(), get_max_path_length(), "%s", argv[1]);
 
+    parameter_directory_given = TRUE;
     /*get information about the file and catch errors*/
     if (-1 != lstat(get_path_buffer(), &stbuf))
     {
@@ -409,11 +362,13 @@ int main(int argc, const char* argv[])
             if (NULL == found_dir)
             {
                 /* use current directory */
-                strcpy(start_dir,".");
+                parameter_directory_given = FALSE;
+                strcpy(start_dir, ".");
             }
             result = do_dir(start_dir, argv);
         }
-        else {
+        else
+        {
             result = do_file(argv[1], &stbuf, argv);
         }
     }
@@ -500,176 +455,6 @@ inline static char* get_base_name_buffer(void)
 
 /**
  *
- * \brief Get index of -user argument.
- *
- * \return -1 if argument not present, else index of argument.
- */
-inline static int get_argument_index_user(void)
-{
-    return sargument_index_user;
-}
-
-/**
- *
- * \brief Get index of -nouser argument.
- *
- * \return -1 if argument not present, else index of argument.
- */
-inline static int get_argument_index_nouser(void)
-{
-    return sargument_index_nouser;
-}
-
-/**
- *
- * \brief Get index of -name argument.
- *
- * \return -1 if argument not present, else index of argument.
- */
-inline static int get_argument_index_name(void)
-{
-    return sargument_index_name;
-}
-
-/**
- *
- * \brief Get index of -path argument.
- *
- * \return -1 if argument not present, else index of argument.
- */
-inline static int get_argument_index_path(void)
-{
-    return sargument_index_path;
-}
-
-/**
- *
- * \brief Get index of -type argument.
- *
- * \return -1 if argument not present, else index of argument.
- */
-inline static int get_argument_index_type(void)
-{
-    return sargument_index_type;
-}
-
-
-#if 0
-/**
- *
- * \brief Get index of -ls argument.
- *
- * \return -1 if argument not present, else index of argument.
- */
-inline static int get_argument_index_ls(void)
-{
-    return sargument_index_ls;
-}
-
-/**
- *
- * \brief Get index of -print argument.
- *
- * \return -1 if argument not present, else index of argument.
- */
-inline static int get_argument_index_print(void)
-{
-    return sargument_index_print;
-}
-#endif
-/**
- *
- * \brief Set index of -user argument.
- *
- * \param index to be set.
- *
- * \return void.
- */
-inline static void set_argument_index_user(int index)
-{
-    sargument_index_user = index;
-}
-
-/**
- *
- * \brief Set index of -nouser argument.
- *
- * \param index to be set.
- *
- * \return void.
- */
-inline static void set_argument_index_nouser(int index)
-{
-    sargument_index_nouser = index;
-}
-
-/**
- *
- * \brief Set index of -name argument.
- *
- * \param index to be set.
- *
- * \return void.
- */
-inline static void set_argument_index_name(int index)
-{
-    sargument_index_name = index;
-}
-
-/**
- *
- * \brief Set index of -path argument.
- *
- * \param index to be set.
- *
- * \return void.
- */
-inline static void set_argument_index_path(int index)
-{
-    sargument_index_path = index;
-}
-
-/**
- *
- * \brief Set index of -type argument.
- *
- * \param index to be set.
- *
- * \return void.
- */
-inline static void set_argument_index_type(int index)
-{
-    sargument_index_type = index;
-}
-
-/**
- *
- * \brief Set index of -ls argument.
- *
- * \param index to be set.
- *
- * \return void.
- */
-inline static void set_argument_index_ls(int index)
-{
-    sargument_index_ls = index;
-}
-
-/**
- *
- * \brief Set index of -print argument.
- *
- * \param index to be set.
- *
- * \return void.
- */
-inline static void set_argument_index_print(int index)
-{
-    sargument_index_print = index;
-}
-
-/**
- *
  * \brief Print the usage.
  *
  * \return void
@@ -746,7 +531,8 @@ static int do_dir(const char* dir_name, const char* const * params)
                     print_error("malloc() failed: Out of memory.\n");
                     if (closedir(dirhandle) < 0)
                     {
-                        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "closedir() failed: Can not close directory %s\n", dir_name);
+                        snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                                "closedir() failed: Can not close directory %s\n", dir_name);
                         print_error(get_print_buffer());
                     }
                     return EXIT_FAILURE;
@@ -756,7 +542,8 @@ static int do_dir(const char* dir_name, const char* const * params)
                 {
                     if (closedir(dirhandle) < 0)
                     {
-                        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "closedir() failed: Can not close directory %s\n", dir_name);
+                        snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                                "closedir() failed: Can not close directory %s\n", dir_name);
                         print_error(get_print_buffer());
                     }
                     free(next_path);
@@ -797,11 +584,85 @@ static int do_dir(const char* dir_name, const char* const * params)
  */
 static int do_file(const char* file_name, StatType* file_info, const char* const * params)
 {
-    if (filter_type(file_name, params, file_info) && filter_name(file_name, params, file_info)
-            && filter_path(file_name, params, file_info) && filter_nouser(file_name, params, file_info)
-            && filter_user(file_name, params, file_info))
+
+    int i = 1;
+    boolean printed_print = FALSE;
+    boolean printed_ls = FALSE;
+    boolean matched = TRUE;
+    boolean filter = FALSE;
+    boolean filtered = FALSE;
+
+    while (params[i] != NULL)
     {
-        print_result(file_name, file_info, params);
+
+        if (strcmp(params[i], PARAM_STR_TYPE) == 0)
+        {
+            filter = filter_type(file_name, i, params, file_info);
+            matched = matched || filter;
+            filtered = TRUE;
+            ++i;
+        }
+
+        if (strcmp(params[i], PARAM_STR_USER) == 0)
+        {
+            filter = filter_user(file_name, i, params, file_info);
+            matched = matched || filter;
+            filtered = TRUE;
+            ++i;
+        }
+
+        if (strcmp(params[i], PARAM_STR_NOUSER) == 0)
+        {
+            filter = filter_nouser(file_name, i, params, file_info);
+            matched = matched || filter;
+            filtered = TRUE;
+        }
+
+        if (strcmp(params[i], PARAM_STR_NAME) == 0)
+        {
+            filter = filter_name(file_name, i, params, file_info);
+            matched = matched || filter;
+            filtered = TRUE;
+            ++i;
+        }
+
+        if (strcmp(params[i], PARAM_STR_PATH) == 0)
+        {
+            filter = filter_path(file_name, i, params, file_info);
+            matched = matched || filter;
+            filtered = TRUE;
+            ++i;
+        }
+
+        if (strcmp(params[i], PARAM_STR_LS) == 0)
+        {
+            if (matched)
+            {
+                print_detail_ls(file_name, file_info);
+                printed_ls = TRUE;
+            }
+        }
+        if (strcmp(params[i], PARAM_STR_PRINT) == 0)
+        {
+            print_detail_print(file_name);
+            printed_print = TRUE;
+        }
+        ++i;
+    }
+
+    if (filtered)
+    {
+        if (matched && !printed_print && !printed_ls)
+        {
+            print_detail_print(file_name);
+        }
+    }
+    else
+    {
+        if (!printed_print && !printed_ls)
+        {
+            print_detail_print(file_name);
+        }
     }
 
     return EXIT_SUCCESS;
@@ -857,7 +718,6 @@ int init(const char** program_args)
             return ENOMEM;
         }
     }
-
 
     return EXIT_SUCCESS;
 
@@ -1005,78 +865,30 @@ static char get_file_type(const StatType* file_info)
 
 }
 
-#if 0
-/**
- * \brief Query file type of given character.
- *
- * \param param identifier of file type.
- *
- * \return FileType the file type enumerator.
- */
-static FileType get_file_type_info(const char param)
-{
-
-    FileType result = FILE_TYPE_UNKNOWN;
-
-    switch (param)
-    {
-    case 'b':
-        result = FILE_TYPE_BLOCK;
-        break;
-    case 'c':
-        result = FILE_TYPE_CHAR;
-        break;
-    case 'd':
-        result = FILE_TYPE_DIRECTORY;
-        break;
-    case 'p':
-        result = FILE_TYPE_PIPE;
-        break;
-    case 'f':
-        result = FILE_TYPE_FILE;
-        break;
-    case 'l':
-        result = FILE_TYPE_LINK;
-        break;
-    case 's':
-        result = FILE_TYPE_SOCKET;
-        break;
-    default:
-        result = FILE_TYPE_UNKNOWN;
-        break;
-    }
-
-    return result;
-}
-#endif
-
 /**
  * \brief Filters the directory entry due to -name  parameter.
  *
  * applies -name filter (if defined) to.
  *
  * \param path_to_examine directory entry to investigate for name.
+ * \param current_param currently processed parameter index.
  * \param params Program parameter arguments given by user.
  * \param file_info as read from operating system.
  *
  * \return boolean TRUE name filter matched or not given, FALSE no match found.
  */
-static boolean filter_name(const char* path_to_examine, const char* const * params,
-        __attribute__((unused))  StatType* file_info)
+static boolean filter_name(const char* path_to_examine, const int current_param, const char* const * params,
+        __attribute__((unused))   StatType* file_info)
 {
     char* buffer = NULL;
 
-    if (get_argument_index_name() < 0)
-    {
-        return TRUE;
-    }
     /*  We match the actual file path against the pattern
      *  delivered as argument to -name
      */
     buffer = strcpy(get_base_name_buffer(), path_to_examine);
     buffer = basename(buffer);
     /* Do we have a pattern match? */
-    return (0 == fnmatch(params[get_argument_index_name() + 1], buffer, 0));
+    return (0 == fnmatch(params[current_param + 1], buffer, 0));
 }
 
 /**
@@ -1085,20 +897,16 @@ static boolean filter_name(const char* path_to_examine, const char* const * para
  * applies -name filter (if defined) to.
  *
  * \param path_to_examine directory entry to investigate for path.
+ * \param current_param currently processed parameter index.
  * \param params Program parameter arguments given by user.
  * \param file_info as read from operating system.
  *
  * \return boolean TRUE name filter matched or not given, FALSE no match found.
  */
-static boolean filter_path(const char* path_to_examine, const char* const * params,
-        __attribute__((unused)) StatType* file_info)
+static boolean filter_path(const char* path_to_examine, const int current_param, const char* const * params,
+        __attribute__((unused))    StatType* file_info)
 {
     char* buffer = NULL;
-
-    if (get_argument_index_path() < 0)
-    {
-        return TRUE;
-    }
 
     /**
      *  We match the actual file path against the pattern
@@ -1108,7 +916,7 @@ static boolean filter_path(const char* path_to_examine, const char* const * para
     buffer = basename(buffer);
 
     /* Do we have a pattern match? */
-    return (0 == fnmatch(params[get_argument_index_path() + 1], buffer, FNM_PATHNAME));
+    return (0 == fnmatch(params[current_param + 1], buffer, FNM_PATHNAME));
 }
 
 /**
@@ -1117,18 +925,16 @@ static boolean filter_path(const char* path_to_examine, const char* const * para
  * applies -nouser filter (if defined) to path_to_examine.
  *
  * \param path_to_examine directory entry to investigate for path.
+ * \param current_param currently processed parameter index.
  * \param params Program parameter arguments given by user.
  * \param file_info as read from operating system.
  *
  * \return boolean TRUE name filter matched or not given, FALSE no match found.
  */
 static boolean filter_nouser(__attribute__((unused)) const char* path_to_examine,
-        __attribute__((unused)) const char* const * params, StatType* file_info)
+        __attribute__((unused)) const int current_param, __attribute__((unused)) const char* const * params,
+        StatType* file_info)
 {
-    if (get_argument_index_nouser() < 0)
-    {
-        return TRUE;
-    }
     return (has_no_user(file_info) == 1);
 }
 
@@ -1143,15 +949,11 @@ static boolean filter_nouser(__attribute__((unused)) const char* path_to_examine
  *
  * \return boolean TRUE name filter matched or not given, FALSE no match found.
  */
-static boolean filter_user(__attribute__((unused)) const char* path_to_examine, const char* const * params,
-        __attribute__((unused))  StatType* file_info)
+static boolean filter_user(__attribute__((unused)) const char* path_to_examine, const int current_param,
+        const char* const * params, __attribute__((unused))     StatType* file_info)
 {
-    if (get_argument_index_user() < 0)
-    {
-        return TRUE;
-    }
 
-    if (FALSE == user_exist(params[get_argument_index_user() + 1]))
+    if (FALSE == user_exist(params[current_param + 1]))
     {
         cleanup(TRUE);
     }
@@ -1169,21 +971,17 @@ static boolean filter_user(__attribute__((unused)) const char* path_to_examine, 
  *
  * \return boolean TRUE name filter matched or not given, FALSE no match found.
  */
-static boolean filter_type(__attribute__((unused)) const char* path_to_examine, const char* const * params,
-        StatType* file_info)
+static boolean filter_type(__attribute__((unused)) const char* path_to_examine, const int current_param,
+        const char* const * params, StatType* file_info)
 {
     const char* parameter1;
 
-    if (get_argument_index_type() < 0)
-    {
-        return TRUE;
-    }
-
-    parameter1 = params[get_argument_index_type() + 1];
+    parameter1 = params[current_param + 1];
     /* check if option argument describes the same file type as file to examine has */
     return (*parameter1 == get_file_type(file_info));
 }
 
+#if 0
 /**
  * \brief Outputs matching result.
  *
@@ -1208,7 +1006,6 @@ static void print_result(const char* file_path, StatType* file_info, const char*
     boolean printed_print = FALSE;
     boolean printed_ls = FALSE;
 
-    /* check for -ls option */
     while (params[i] != NULL)
     {
         if (strcmp(params[i], PARAM_STR_LS) == 0)
@@ -1229,40 +1026,9 @@ static void print_result(const char* file_path, StatType* file_info, const char*
         print_detail_print(file_path);
     }
 
-
-#if 0
-    print_detail print_function[2];
-    int outputs = 1;
-    int i = 0;
-
-    /* set function pointers for printing out the different output formats. */
-    print_function[0] = print_detail_print;
-    print_function[1] = print_detail_print;
-
-    if (get_argument_index_ls() >= 0)
-    {
-        /* we have a -ls option */
-        outputs = 2;
-        if (get_argument_index_print() >= get_argument_index_ls())
-        {
-            /* -ls is given before -print or no -print given */
-            print_function[0] = print_detail_ls;
-        }
-        else
-        {
-            print_function[1] = print_detail_ls;
-        }
-    }
-    for (i = 0; i < outputs; ++i)
-    {
-        /* now print the output in the right order of option arguments */
-        (print_function[i])(file_path, file_info);
-    }
-#endif /* 0 */
-
     return;
 }
-
+#endif /* 0 */
 
 /**
  * \brief Print out last changed date of file on standard output.
@@ -1460,16 +1226,33 @@ static void combine_ls(const StatType* file_info)
     print_file_change_time(file_info);
 }
 
-boolean parameters_valid(const char * const  * params){
-	int i = 0;
-	while(params[i] != '\0') {
+#if 0
+/* mark unused parameters with __attribute__((unused)) otherwise compilation fails*/
 
-	}
+/**
+ * \brief Check if there are valid parameters.
+ *
+ * \param params as given by user on program start.
+ *
+ * \return bool
+ * \retval TRUE parameters are valid.
+ * \retval FALSE parameters are invalid.
+ **/
+boolean parameters_valid( const char * const* params)
+{
+    int i = 1; /* 1st parameter is program name, so start at index 1. */
 
-	return TRUE;
+    while (params[i] != '\0')
+    {
+
+    }
+
+    return TRUE;
 }
+#endif
 
 /*
  * =================================================================== eof ==
  */
+
 
