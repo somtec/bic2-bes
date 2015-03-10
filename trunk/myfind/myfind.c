@@ -185,7 +185,7 @@ static int do_dir(const char* dir_name, const char* const * params);
 static void print_result(const char* file_path, StatType* file_info, const char* const * params);
 #endif
 
-static boolean user_exist(const char* user_name);
+static boolean user_exist(const char* user_name, const boolean search_for_uid);
 
 static boolean has_no_user(StatType* file_info);
 
@@ -264,6 +264,14 @@ int main(int argc, const char* argv[])
                 cleanup(TRUE);
             }
         }
+
+        if (0 == strcmp(PARAM_STR_NOUSER, argv[current_argument]))
+        {
+            /* found -nouser */
+            current_argument += 1;
+            continue;
+        }
+
 
         if (0 == strcmp(PARAM_STR_NAME, argv[current_argument]))
         {
@@ -769,13 +777,14 @@ void print_error(const char* message)
 /**
  *\brief Determines if the given user exists.
  *
- * Check if the given user exist as an user or user id on the system.
+ * Check if the given user exist as an user on the system.
  *
  *\param user_name to be queried.
+ *\param search_for_uid search for uid if user not found
  *\
  *\return FALSE user does not exist, TRUE user exists.
  */
-static boolean user_exist(const char* user_name)
+static boolean user_exist(const char* user_name, const boolean search_for_uid)
 {
     struct passwd* pwd = NULL;
     char* end_userid = NULL;
@@ -788,6 +797,7 @@ static boolean user_exist(const char* user_name)
         /* the user exist */
         return TRUE;
     }
+    else if(search_for_uid== FALSE) return FALSE;
 
     /* is it a user id instead of a user name? */
     errno = 0;
@@ -819,7 +829,9 @@ static boolean user_exist(const char* user_name)
  */
 static boolean has_no_user(StatType* file_info)
 {
-    return (NULL != getpwuid(file_info->st_uid));
+    struct passwd* pwd = NULL;
+    pwd = getpwuid(file_info->st_uid);
+    return (pwd==NULL);
 }
 
 /**
@@ -936,7 +948,9 @@ static boolean filter_nouser(__attribute__((unused)) const char* path_to_examine
         __attribute__((unused)) const int current_param, __attribute__((unused)) const char* const * params,
         StatType* file_info)
 {
-    return (has_no_user(file_info) == 1);
+	boolean result = FALSE;
+	result = has_no_user(file_info);
+    return (result);
 }
 
 /**
@@ -959,30 +973,32 @@ static boolean filter_user(__attribute__((unused)) const char* path_to_examine, 
 
 
     search_uid = strtol(params[current_param + 1], &end_ptr, 10);
-    if(*end_ptr == '\0') {
-        /* successfull string to int conversion */
-        /* -> parameter of -user seems to be an UID */
-        return (search_uid == file_info->st_uid);
+    if(*end_ptr != '\0' || user_exist(params[current_param + 1], FALSE)) {
+    	/*  string to int conversion failed --> we have a username */
+    	/*  or special case --> username is pure numeric */
+		if(user_exist(params[current_param + 1], FALSE)){
+				pwd=getpwuid(file_info->st_uid);
+				if(pwd != NULL) {
+					if(strcmp(pwd->pw_name,params[current_param + 1]) == 0){
+						/* parameter of -user is equal to
+						 * user name derived from UID */
+						return TRUE;
+					}
+				}
+				return FALSE;
+			}
+			else {
+				snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+						"‘%s’ is not the name of a known user", params[current_param + 1]);
+				print_error(get_print_buffer());
+				cleanup(TRUE);
+				return FALSE;
+            }
     }
     else {
-    	if(user_exist(params[current_param + 1])){
-			pwd=getpwuid(file_info->st_uid);
-			if(pwd != NULL) {
-				if(strcmp(pwd->pw_name,params[current_param + 1]) == 0){
-					/* parameter of -user is equal to
-					 * user name derived from UID */
-					return TRUE;
-				}
-			}
-			return FALSE;
-        }
-        else {
-            snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                    "‘%s’ is not the name of a known user", params[current_param + 1]);
-            print_error(get_print_buffer());
-            cleanup(TRUE);
-            return FALSE;
-        }
+    	/* successfull string to int conversion */
+    	/* -> parameter of -user seems to be an UID */
+    	return (search_uid == file_info->st_uid);
     }
     return TRUE;
 }
