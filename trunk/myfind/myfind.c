@@ -260,7 +260,7 @@ int main(int argc, const char* argv[])
             }
             else
             {
-                print_error("Missing argument to `-user'.\n");
+                print_error("Missing argument to `-user'.");
                 cleanup(TRUE);
             }
         }
@@ -275,7 +275,7 @@ int main(int argc, const char* argv[])
             }
             else
             {
-                print_error("Missing argument to `-name'.\n");
+                print_error("Missing argument to `-name'.");
                 cleanup(TRUE);
             }
         }
@@ -290,7 +290,7 @@ int main(int argc, const char* argv[])
             }
             else
             {
-                print_error("Missing argument to `-path'.\n");
+                print_error("Missing argument to `-path'.");
                 cleanup(TRUE);
             }
         }
@@ -304,7 +304,7 @@ int main(int argc, const char* argv[])
                 if (strlen(next_argument) > 1)
                 {
                     snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                            "Argument of -type must be one character of these '%s'\n.", PARAM_STR_TYPE_VALS);
+                            "Argument of -type must be one character of these '%s'.", PARAM_STR_TYPE_VALS);
                     print_error(get_print_buffer());
                     return EXIT_FAILURE;
                 }
@@ -322,7 +322,7 @@ int main(int argc, const char* argv[])
             }
             else
             {
-                print_error("Missing argument to `-type'.\n");
+                print_error("Missing argument to `-type'.");
                 cleanup(TRUE);
             }
         }
@@ -330,7 +330,7 @@ int main(int argc, const char* argv[])
         if (current_argument > 1)
         {
             /* we have an unknown option */
-            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "invalid predicate `%s'\n.", argv[current_argument]);
+            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "invalid predicate `%s'.", argv[current_argument]);
             print_error(get_print_buffer());
             cleanup(TRUE);
         }
@@ -345,7 +345,7 @@ int main(int argc, const char* argv[])
     {
         free(start_dir);
         start_dir = NULL;
-        print_error("malloc() failed: Out of memory.\n");
+        print_error("malloc() failed: Out of memory.");
         cleanup(TRUE);
     }
 
@@ -490,7 +490,7 @@ static int do_dir(const char* dir_name, const char* const * params)
     dirhandle = opendir(dir_name);
     if (NULL == dirhandle)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "opendir() failed: Can not open directory %s\n", dir_name);
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "opendir() failed: Can not open directory %s", dir_name);
         print_error(get_print_buffer());
         return EXIT_SUCCESS;
     }
@@ -506,7 +506,7 @@ static int do_dir(const char* dir_name, const char* const * params)
         /* get information about the file and catch errors */
         if (-1 == lstat(get_path_buffer(), &file_info))
         {
-            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "lstat() failed: The file %s doesn't exist.\n",
+            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "lstat() failed: The file %s doesn't exist.",
                     get_path_buffer());
             print_error(get_print_buffer());
             /* check next file */
@@ -522,18 +522,18 @@ static int do_dir(const char* dir_name, const char* const * params)
 
 #if DEBUG_OUTPUT
                 snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                        "Move into directory %s.\n", dirp->d_name);
+                        "Move into directory %s.", dirp->d_name);
 #endif /* DEBUG_OUTPUT */
                 debug_print(get_print_buffer());
                 /* recursion for each directory in current directory */
                 next_path = (char*) malloc(get_max_path_length() * sizeof(char));
                 if (NULL == next_path)
                 {
-                    print_error("malloc() failed: Out of memory.\n");
+                    print_error("malloc() failed: Out of memory.");
                     if (closedir(dirhandle) < 0)
                     {
                         snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                                "closedir() failed: Can not close directory %s\n", dir_name);
+                                "closedir() failed: Can not close directory %s", dir_name);
                         print_error(get_print_buffer());
                     }
                     return EXIT_FAILURE;
@@ -544,7 +544,7 @@ static int do_dir(const char* dir_name, const char* const * params)
                     if (closedir(dirhandle) < 0)
                     {
                         snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                                "closedir() failed: Can not close directory %s\n", dir_name);
+                                "closedir() failed: Can not close directory %s", dir_name);
                         print_error(get_print_buffer());
                     }
                     free(next_path);
@@ -560,14 +560,14 @@ static int do_dir(const char* dir_name, const char* const * params)
     }
     if (0 != errno)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "readdir() failed: The dirstream argument is not valid %s\n",
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "readdir() failed: The dirstream argument is not valid %s",
                 dir_name);
         print_error(get_print_buffer());
     }
 
     if (closedir(dirhandle) < 0)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "closedir() failed: Can not close directory %s\n", dir_name);
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "closedir() failed: Can not close directory %s", dir_name);
         print_error(get_print_buffer());
     }
 
@@ -697,7 +697,7 @@ int init(const char** program_args)
     if (-1 == smax_path)
     {
         smax_path = 0;
-        print_error("pathconf() failed: Maximum path length can not be determined.\n");
+        print_error("pathconf() failed: Maximum path length can not be determined.");
         return ENODATA;
     }
 
@@ -706,7 +706,7 @@ int init(const char** program_args)
         spath_buffer = (char*) malloc(smax_path * sizeof(char));
         if (NULL == spath_buffer)
         {
-            print_error("malloc() failed: Out of memory.\n");
+            print_error("malloc() failed: Out of memory.");
             return ENOMEM;
         }
     }
@@ -715,7 +715,7 @@ int init(const char** program_args)
         sbasename_buffer = (char*) malloc(smax_path * sizeof(char));
         if (NULL == sbasename_buffer)
         {
-            print_error("malloc() failed: Out of memory.\n");
+            print_error("malloc() failed: Out of memory.");
             return ENOMEM;
         }
     }
@@ -962,10 +962,7 @@ static boolean filter_user(__attribute__((unused)) const char* path_to_examine, 
     if(*end_ptr == '\0') {
         /* successfull string to int conversion */
         /* -> parameter of -user seems to be an UID */
-        if(search_uid == file_info->st_uid) {
-        	return TRUE;
-        }
-
+        return (search_uid == file_info->st_uid);
     }
     else {
     	if(user_exist(params[current_param + 1])){
@@ -981,7 +978,7 @@ static boolean filter_user(__attribute__((unused)) const char* path_to_examine, 
         }
         else {
             snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                    "‘%s’ is not the name of a known user\n", params[current_param + 1]);
+                    "‘%s’ is not the name of a known user", params[current_param + 1]);
             print_error(get_print_buffer());
             cleanup(TRUE);
             return FALSE;
