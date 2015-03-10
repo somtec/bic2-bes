@@ -186,6 +186,7 @@ static void print_result(const char* file_path, StatType* file_info, const char*
 #endif
 
 static boolean user_exist(const char* user_name);
+
 static boolean has_no_user(StatType* file_info);
 
 static char get_file_type(const StatType* file_info);
@@ -588,7 +589,7 @@ static int do_file(const char* file_name, StatType* file_info, const char* const
     int i = 1;
     boolean printed_print = FALSE;
     boolean printed_ls = FALSE;
-    boolean matched = TRUE;
+    boolean matched = FALSE;
     boolean filter = FALSE;
     boolean filtered = FALSE;
 
@@ -952,10 +953,39 @@ static boolean filter_nouser(__attribute__((unused)) const char* path_to_examine
 static boolean filter_user(__attribute__((unused)) const char* path_to_examine, const int current_param,
         const char* const * params, __attribute__((unused))     StatType* file_info)
 {
+    unsigned int search_uid = 0;
+    char * end_ptr = NULL;
+    struct passwd* pwd = NULL;
 
-    if (FALSE == user_exist(params[current_param + 1]))
-    {
-        cleanup(TRUE);
+
+    search_uid = strtol(params[current_param + 1], &end_ptr, 10);
+    if(*end_ptr == '\0') {
+        /* successfull string to int conversion */
+        /* -> parameter of -user seems to be an UID */
+        if(search_uid == file_info->st_uid) {
+        	return TRUE;
+        }
+
+    }
+    else {
+    	if(user_exist(params[current_param + 1])){
+			pwd=getpwuid(file_info->st_uid);
+			if(pwd != NULL) {
+				if(strcmp(pwd->pw_name,params[current_param + 1]) == 0){
+					/* parameter of -user is equal to
+					 * user name derived from UID */
+					return TRUE;
+				}
+			}
+			return FALSE;
+        }
+        else {
+            snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                    "‘%s’ is not the name of a known user\n", params[current_param + 1]);
+            print_error(get_print_buffer());
+            cleanup(TRUE);
+            return FALSE;
+        }
     }
     return TRUE;
 }
