@@ -263,8 +263,18 @@ int main(int argc, const char* argv[])
             current_argument += 1;
             continue;
         }
-
-
+        if (0 == strcmp(PARAM_STR_LS, argv[current_argument]))
+                {
+                    /* found -ls */
+                    current_argument += 1;
+                    continue;
+                }
+        if (0 == strcmp(PARAM_STR_PRINT, argv[current_argument]))
+                        {
+                            /* found -print */
+                            current_argument += 1;
+                            continue;
+                        }
         if (0 == strcmp(PARAM_STR_NAME, argv[current_argument]))
         {
             /* found -name */
@@ -304,7 +314,7 @@ int main(int argc, const char* argv[])
                 if (strlen(next_argument) > 1)
                 {
                     snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                            "Argument of -type must be one character of these '%s'.",
+                            "Argument of -type must be one character of these `%s'.",
                             PARAM_STR_TYPE_VALS);
                     print_error(get_print_buffer());
                     return EXIT_FAILURE;
@@ -314,7 +324,7 @@ int main(int argc, const char* argv[])
                 if (NULL == strchr(PARAM_STR_TYPE_VALS, test_char))
                 {
                     snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                            "Argument -type unknown options of %s: %c",
+                            "Argument -type unknown options of %s: %c.",
                             PARAM_STR_TYPE, *next_argument);
                     print_error(get_print_buffer());
                     return EXIT_FAILURE;
