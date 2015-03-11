@@ -176,7 +176,8 @@ static void print_error(const char* message);
 static int init(const char** program_args);
 static void cleanup(boolean exit);
 
-static int do_file(const char* file_name, StatType* file_info, const char* const * params);
+static int do_file(const char* file_name, StatType* file_info,
+        const char* const * params);
 static int do_dir(const char* dir_name, const char* const * params);
 
 static boolean user_exist(const char* user_name, const boolean search_for_uid);
@@ -187,7 +188,7 @@ static char get_file_type(const StatType* file_info);
 static boolean filter_name(const char* path_to_examine, const int current_param,
         const char* const * params, StatType* file_info);
 static boolean filter_path(const char* path_to_examine, const int current_param,
-        const char* const * params, __attribute__((unused)) StatType* file_info);
+        const char* const * params, __attribute__((unused))  StatType* file_info);
 static boolean filter_nouser(const char* path_to_examine, const int current_param,
         const char* const * params, StatType* file_info);
 static boolean filter_user(const char* path_to_examine, const int current_param,
@@ -295,7 +296,8 @@ int main(int argc, const char* argv[])
                 if (strlen(next_argument) > 1)
                 {
                     snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                            "Argument of -type must be one character of these '%s'.", PARAM_STR_TYPE_VALS);
+                            "Argument of -type must be one character of these '%s'.",
+                            PARAM_STR_TYPE_VALS);
                     print_error(get_print_buffer());
                     return EXIT_FAILURE;
                 }
@@ -303,7 +305,8 @@ int main(int argc, const char* argv[])
                 test_char = (int) (*next_argument);
                 if (NULL == strchr(PARAM_STR_TYPE_VALS, test_char))
                 {
-                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Argument -type unknown options of %s: %c",
+                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                            "Argument -type unknown options of %s: %c",
                             PARAM_STR_TYPE, *next_argument);
                     print_error(get_print_buffer());
                     return EXIT_FAILURE;
@@ -321,7 +324,8 @@ int main(int argc, const char* argv[])
         if (current_argument > 1)
         {
             /* we have an unknown option */
-            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Invalid predicate `%s'.", argv[current_argument]);
+            snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                    "Invalid predicate `%s'.", argv[current_argument]);
             print_error(get_print_buffer());
             cleanup(TRUE);
         }
@@ -481,7 +485,8 @@ static int do_dir(const char* dir_name, const char* const * params)
     dirhandle = opendir(dir_name);
     if (NULL == dirhandle)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "opendir() failed: Can not open directory %s.", dir_name);
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                "opendir() failed: Can not open directory %s.", dir_name);
         print_error(get_print_buffer());
         return EXIT_SUCCESS;
     }
@@ -493,11 +498,13 @@ static int do_dir(const char* dir_name, const char* const * params)
         StatType file_info;
 
         /* build complete path to file (DIR/FILE) */
-        snprintf(get_path_buffer(), get_max_path_length(), "%s/%s", dir_name, dirp->d_name);
+        snprintf(get_path_buffer(), get_max_path_length(), "%s/%s", dir_name,
+                dirp->d_name);
         /* get information about the file and catch errors */
         if (-1 == lstat(get_path_buffer(), &file_info))
         {
-            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "lstat() failed: The file %s doesn't exist.",
+            snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                    "lstat() failed: The file %s doesn't exist.",
                     get_path_buffer());
             print_error(get_print_buffer());
             /* check next file */
@@ -524,7 +531,8 @@ static int do_dir(const char* dir_name, const char* const * params)
                     if (closedir(dirhandle) < 0)
                     {
                         snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                                "closedir() failed: Can not close directory %s.", dir_name);
+                                "closedir() failed: Can not close directory %s.",
+                                dir_name);
                         print_error(get_print_buffer());
                     }
                     return EXIT_FAILURE;
@@ -535,7 +543,8 @@ static int do_dir(const char* dir_name, const char* const * params)
                     if (closedir(dirhandle) < 0)
                     {
                         snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                                "closedir() failed: Can not close directory %s.", dir_name);
+                                "closedir() failed: Can not close directory %s.",
+                                dir_name);
                         print_error(get_print_buffer());
                     }
                     free(next_path);
@@ -551,14 +560,16 @@ static int do_dir(const char* dir_name, const char* const * params)
     }
     if (0 != errno)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "readdir() failed: The dirstream argument is not valid %s.",
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                "readdir() failed: The dirstream argument is not valid %s.",
                 dir_name);
         print_error(get_print_buffer());
     }
 
     if (closedir(dirhandle) < 0)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "closedir() failed: Can not close directory %s.", dir_name);
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                "closedir() failed: Can not close directory %s.", dir_name);
         print_error(get_print_buffer());
     }
 
@@ -574,7 +585,8 @@ static int do_dir(const char* dir_name, const char* const * params)
  * \param params is the program argument vector.
  * \return void
  */
-static int do_file(const char* file_name, StatType* file_info, const char* const * params)
+static int do_file(const char* file_name, StatType* file_info,
+        const char* const * params)
 {
 
     int i = 1;
@@ -783,7 +795,10 @@ static boolean user_exist(const char* user_name, const boolean search_for_uid)
         /* the user exist */
         return TRUE;
     }
-    else if(search_for_uid== FALSE) return FALSE;
+    else if (search_for_uid == FALSE)
+    {
+        return FALSE;
+    }
 
     /* is it a user id instead of a user name? */
     errno = 0;
@@ -838,7 +853,7 @@ static boolean user_exist(const char* user_name, const boolean search_for_uid)
 
     return TRUE;
 
-#endif
+#endif /* endif 0 */
 }
 
 /**
@@ -852,10 +867,10 @@ static boolean has_no_user(StatType* file_info)
 {
     struct passwd* pwd = NULL;
     pwd = getpwuid(file_info->st_uid);
-    return (pwd==NULL);
+    return (pwd == NULL);
 #if 0
     return (NULL != getpwuid(file_info->st_uid));
-#endif
+#endif /* endif 0 */
 }
 
 /**
@@ -914,8 +929,8 @@ static char get_file_type(const StatType* file_info)
  *
  * \return boolean TRUE name filter matched or not given, FALSE no match found.
  */
-static boolean filter_name(const char* path_to_examine, const int current_param, const char* const * params,
-        __attribute__((unused))   StatType* file_info)
+static boolean filter_name(const char* path_to_examine, const int current_param,
+        const char* const * params, __attribute__((unused)) StatType* file_info)
 {
     char* buffer = NULL;
 
@@ -940,8 +955,8 @@ static boolean filter_name(const char* path_to_examine, const int current_param,
  *
  * \return boolean TRUE name filter matched or not given, FALSE no match found.
  */
-static boolean filter_path(const char* path_to_examine, const int current_param, const char* const * params,
-        __attribute__((unused))    StatType* file_info)
+static boolean filter_path(const char* path_to_examine, const int current_param,
+        const char* const * params, __attribute__((unused)) StatType* file_info)
 {
     char* buffer = NULL;
 
@@ -969,15 +984,15 @@ static boolean filter_path(const char* path_to_examine, const int current_param,
  * \return boolean TRUE name filter matched or not given, FALSE no match found.
  */
 static boolean filter_nouser(__attribute__((unused)) const char* path_to_examine,
-        __attribute__((unused)) const int current_param, __attribute__((unused)) const char* const * params,
-        StatType* file_info)
+        __attribute__((unused)) const int current_param,
+        __attribute__((unused)) const char* const * params, StatType* file_info)
 {
-	boolean result = FALSE;
-	result = has_no_user(file_info);
+    boolean result = FALSE;
+    result = has_no_user(file_info);
     return (result);
 #if 0
     return (has_no_user(file_info) == 1);
-#endif
+#endif /* endif 0 */
 }
 
 /**
@@ -991,45 +1006,50 @@ static boolean filter_nouser(__attribute__((unused)) const char* path_to_examine
  *
  * \return boolean TRUE name filter matched or not given, FALSE no match found.
  */
-static boolean filter_user(__attribute__((unused)) const char* path_to_examine, const int current_param,
-        const char* const * params, __attribute__((unused))     StatType* file_info)
+static boolean filter_user(__attribute__((unused)) const char* path_to_examine,
+        const int current_param, const char* const * params,
+        __attribute__((unused)) StatType* file_info)
 {
 
     unsigned int search_uid = 0;
     char * end_ptr = NULL;
     struct passwd* pwd = NULL;
 
-
     search_uid = strtol(params[current_param + 1], &end_ptr, 10);
-    if(*end_ptr != '\0' || user_exist(params[current_param + 1], FALSE)) {
-    	/*  string to int conversion failed --> we have a username */
-    	/*  or special case --> username is pure numeric */
-		if(user_exist(params[current_param + 1], FALSE)){
-				pwd=getpwuid(file_info->st_uid);
-				if(pwd != NULL) {
-					if(strcmp(pwd->pw_name,params[current_param + 1]) == 0){
-						/* parameter of -user is equal to
-						 * user name derived from UID */
-						return TRUE;
-					}
-				}
-				return FALSE;
-			}
-			else {
-				snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-						"‘%s’ is not the name of a known user", params[current_param + 1]);
-				print_error(get_print_buffer());
-				cleanup(TRUE);
-				return FALSE;
+    if (*end_ptr != '\0' || user_exist(params[current_param + 1], FALSE))
+    {
+        /*  string to int conversion failed --> we have a username */
+        /*  or special case --> username is pure numeric */
+        if (user_exist(params[current_param + 1], FALSE))
+        {
+            pwd = getpwuid(file_info->st_uid);
+            if (pwd != NULL)
+            {
+                if (strcmp(pwd->pw_name, params[current_param + 1]) == 0)
+                {
+                    /* parameter of -user is equal to
+                     * user name derived from UID */
+                    return TRUE;
+                }
             }
+            return FALSE;
+        }
+        else
+        {
+            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "‘%s’ is not the name of a known user",
+                    params[current_param + 1]);
+            print_error(get_print_buffer());
+            cleanup(TRUE);
+            return FALSE;
+        }
     }
-    else {
-    	/* successfull string to int conversion */
-    	/* -> parameter of -user seems to be an UID */
-    	return (search_uid == file_info->st_uid);
+    else
+    {
+        /* successfull string to int conversion */
+        /* -> parameter of -user seems to be an UID */
+        return (search_uid == file_info->st_uid);
     }
     return TRUE;
-
 
 #if 0
     if (FALSE == user_exist(params[current_param + 1]))
@@ -1037,7 +1057,7 @@ static boolean filter_user(__attribute__((unused)) const char* path_to_examine, 
         cleanup(TRUE);
     }
     return TRUE;
-#endif    
+#endif /* endif 0 */
 }
 
 /**
@@ -1051,8 +1071,8 @@ static boolean filter_user(__attribute__((unused)) const char* path_to_examine, 
  *
  * \return boolean TRUE name filter matched or not given, FALSE no match found.
  */
-static boolean filter_type(__attribute__((unused)) const char* path_to_examine, const int current_param,
-        const char* const * params, StatType* file_info)
+static boolean filter_type(__attribute__((unused)) const char* path_to_examine,
+        const int current_param, const char* const * params, StatType* file_info)
 {
     const char* parameter1;
 
@@ -1061,54 +1081,6 @@ static boolean filter_type(__attribute__((unused)) const char* path_to_examine, 
     return (*parameter1 == get_file_type(file_info));
 }
 
-#if 0
-/**
- * \brief Outputs matching result.
- *
- * \param file_path matching file_path.
- * \param params are the command line arguments.
- * \param file_info as read from operating system.
- *
- * \return void
- */
-/**
- * \brief Outputs matching result.
- *
- * \param file_path matching file_path.
- * \param params are the command line arguments.
- * \param file_info as read from operating system.
- *
- * \return void
- */
-static void print_result(const char* file_path, StatType* file_info, const char* const * params)
-{
-    int i = 1;
-    boolean printed_print = FALSE;
-    boolean printed_ls = FALSE;
-
-    while (params[i] != NULL)
-    {
-        if (strcmp(params[i], PARAM_STR_LS) == 0)
-        {
-            print_detail_ls(file_path, file_info);
-            printed_ls = TRUE;
-        }
-        if (strcmp(params[i], PARAM_STR_PRINT) == 0)
-        {
-            print_detail_print(file_path);
-            printed_print = TRUE;
-        }
-        i++;
-    }
-
-    if (!printed_print && !printed_ls)
-    {
-        print_detail_print(file_path);
-    }
-
-    return;
-}
-#endif /* 0 */
 
 /**
  * \brief Print out last changed date of file on standard output.
@@ -1121,11 +1093,13 @@ void print_file_change_time(const StatType* file_info)
 {
     size_t written = 0;
     /* Convert the time into the local time format it. */
-    written = strftime(get_print_buffer(), MAX_PRINT_BUFFER - 1, "%b %d %H:%M", localtime(&file_info->st_mtime));
+    written = strftime(get_print_buffer(), MAX_PRINT_BUFFER - 1, "%b %d %H:%M",
+            localtime(&file_info->st_mtime));
 
     if (0 == written)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "strftime() failed: Could not print file changed time\n.");
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                "strftime() failed: Could not print file changed time\n.");
         print_error(get_print_buffer());
         return;
     }
