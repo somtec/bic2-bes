@@ -104,9 +104,6 @@ typedef enum booleanEnum
     TRUE
 } boolean;
 
-/** Prototype for printing output functions */
-typedef void (*print_detail)(const char* file_path, StatType* file_info);
-
 /*
  * --------------------------------------------------------------- globals --
  */
@@ -181,26 +178,22 @@ static void cleanup(boolean exit);
 
 static int do_file(const char* file_name, StatType* file_info, const char* const * params);
 static int do_dir(const char* dir_name, const char* const * params);
-#if 0
-static void print_result(const char* file_path, StatType* file_info, const char* const * params);
-#endif
 
 static boolean user_exist(const char* user_name, const boolean search_for_uid);
-
 static boolean has_no_user(StatType* file_info);
 
 static char get_file_type(const StatType* file_info);
 
-static boolean filter_name(const char* path_to_examine, const int current_param, const char* const * params,
-        StatType* file_info);
-static boolean filter_path(const char* path_to_examine, const int current_param, const char* const * params,
-        __attribute__((unused)) StatType* file_info);
-static boolean filter_nouser(const char* path_to_examine, const int current_param, const char* const * params,
-        StatType* file_info);
-static boolean filter_user(const char* path_to_examine, const int current_param, const char* const * params,
-        StatType* file_info);
-static boolean filter_type(const char* path_to_examine, const int current_param, const char* const * params,
-        StatType* file_info);
+static boolean filter_name(const char* path_to_examine, const int current_param,
+        const char* const * params, StatType* file_info);
+static boolean filter_path(const char* path_to_examine, const int current_param,
+        const char* const * params, __attribute__((unused)) StatType* file_info);
+static boolean filter_nouser(const char* path_to_examine, const int current_param,
+        const char* const * params, StatType* file_info);
+static boolean filter_user(const char* path_to_examine, const int current_param,
+        const char* const * params, StatType* file_info);
+static boolean filter_type(const char* path_to_examine, const int current_param,
+        const char* const * params, StatType* file_info);
 
 static void print_file_change_time(const StatType* file_info);
 static void print_file_permissions(const StatType* file_info);
@@ -210,9 +203,7 @@ static void print_detail_ls(const char* file_path, StatType* file_info);
 static void print_detail_print(const char* file_path);
 static void combine_ls(const StatType* file_info);
 
-#if 0
-static boolean parameters_valid(const char * const * params);
-#endif/**
+/**
  *
  * \brief main implements a a simple replacement for Linux find.
  *
@@ -264,14 +255,6 @@ int main(int argc, const char* argv[])
                 cleanup(TRUE);
             }
         }
-
-        if (0 == strcmp(PARAM_STR_NOUSER, argv[current_argument]))
-        {
-            /* found -nouser */
-            current_argument += 1;
-            continue;
-        }
-
 
         if (0 == strcmp(PARAM_STR_NAME, argv[current_argument]))
         {
@@ -338,7 +321,7 @@ int main(int argc, const char* argv[])
         if (current_argument > 1)
         {
             /* we have an unknown option */
-            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "invalid predicate `%s'.", argv[current_argument]);
+            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Invalid predicate `%s'.", argv[current_argument]);
             print_error(get_print_buffer());
             cleanup(TRUE);
         }
@@ -498,7 +481,7 @@ static int do_dir(const char* dir_name, const char* const * params)
     dirhandle = opendir(dir_name);
     if (NULL == dirhandle)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "opendir() failed: Can not open directory %s", dir_name);
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "opendir() failed: Can not open directory %s.", dir_name);
         print_error(get_print_buffer());
         return EXIT_SUCCESS;
     }
@@ -530,7 +513,7 @@ static int do_dir(const char* dir_name, const char* const * params)
 
 #if DEBUG_OUTPUT
                 snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                        "Move into directory %s.", dirp->d_name);
+                        "Move into directory %s.\n", dirp->d_name);
 #endif /* DEBUG_OUTPUT */
                 debug_print(get_print_buffer());
                 /* recursion for each directory in current directory */
@@ -541,7 +524,7 @@ static int do_dir(const char* dir_name, const char* const * params)
                     if (closedir(dirhandle) < 0)
                     {
                         snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                                "closedir() failed: Can not close directory %s", dir_name);
+                                "closedir() failed: Can not close directory %s.", dir_name);
                         print_error(get_print_buffer());
                     }
                     return EXIT_FAILURE;
@@ -552,7 +535,7 @@ static int do_dir(const char* dir_name, const char* const * params)
                     if (closedir(dirhandle) < 0)
                     {
                         snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                                "closedir() failed: Can not close directory %s", dir_name);
+                                "closedir() failed: Can not close directory %s.", dir_name);
                         print_error(get_print_buffer());
                     }
                     free(next_path);
@@ -568,14 +551,14 @@ static int do_dir(const char* dir_name, const char* const * params)
     }
     if (0 != errno)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "readdir() failed: The dirstream argument is not valid %s",
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "readdir() failed: The dirstream argument is not valid %s.",
                 dir_name);
         print_error(get_print_buffer());
     }
 
     if (closedir(dirhandle) < 0)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "closedir() failed: Can not close directory %s", dir_name);
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "closedir() failed: Can not close directory %s.", dir_name);
         print_error(get_print_buffer());
     }
 
@@ -597,7 +580,7 @@ static int do_file(const char* file_name, StatType* file_info, const char* const
     int i = 1;
     boolean printed_print = FALSE;
     boolean printed_ls = FALSE;
-    boolean matched = FALSE;
+    boolean matched = TRUE;
     boolean filter = FALSE;
     boolean filtered = FALSE;
 
@@ -653,8 +636,11 @@ static int do_file(const char* file_name, StatType* file_info, const char* const
         }
         if (strcmp(params[i], PARAM_STR_PRINT) == 0)
         {
-            print_detail_print(file_name);
-            printed_print = TRUE;
+            if (matched)
+            {
+                print_detail_print(file_name);
+                printed_print = TRUE;
+            }
         }
         ++i;
     }
@@ -695,7 +681,7 @@ int init(const char** program_args)
         sprint_buffer = (char*) malloc(MAX_PRINT_BUFFER * sizeof(char));
         if (NULL == sprint_buffer)
         {
-            fprintf(stderr, "%s: %s\n", sprogram_arg0, "Out of memory.\n");
+            fprintf(stderr, "%s: %s\n", sprogram_arg0, "Out of memory.");
             return ENOMEM;
         }
     }
@@ -780,7 +766,7 @@ void print_error(const char* message)
  * Check if the given user exist as an user on the system.
  *
  *\param user_name to be queried.
- *\param search_for_uid search for uid if user not found
+ *\param search_for_uid search for uid if user not found.
  *\
  *\return FALSE user does not exist, TRUE user exists.
  */
@@ -818,6 +804,41 @@ static boolean user_exist(const char* user_name, const boolean search_for_uid)
     }
 
     return TRUE;
+
+#if 0
+    struct passwd* pwd = NULL;
+    char* end_userid = NULL;
+    uid_t uid = 0;
+
+    pwd = getpwnam(user_name);
+
+    if (NULL != pwd)
+    {
+        /* the user exist */
+        return TRUE;
+    }
+
+    /* is it a user id instead of a user name? */
+    errno = 0;
+    uid = (uid_t) strtol(user_name, &end_userid, USERID_BASE);
+    if (errno)
+    {
+        return FALSE;
+    }
+    if (0 == uid)
+    {
+        return FALSE;
+    }
+
+    pwd = getpwuid(uid);
+    if (NULL == pwd)
+    {
+        return FALSE;
+    }
+
+    return TRUE;
+
+#endif
 }
 
 /**
@@ -832,6 +853,9 @@ static boolean has_no_user(StatType* file_info)
     struct passwd* pwd = NULL;
     pwd = getpwuid(file_info->st_uid);
     return (pwd==NULL);
+#if 0
+    return (NULL != getpwuid(file_info->st_uid));
+#endif
 }
 
 /**
@@ -951,6 +975,9 @@ static boolean filter_nouser(__attribute__((unused)) const char* path_to_examine
 	boolean result = FALSE;
 	result = has_no_user(file_info);
     return (result);
+#if 0
+    return (has_no_user(file_info) == 1);
+#endif
 }
 
 /**
@@ -967,6 +994,7 @@ static boolean filter_nouser(__attribute__((unused)) const char* path_to_examine
 static boolean filter_user(__attribute__((unused)) const char* path_to_examine, const int current_param,
         const char* const * params, __attribute__((unused))     StatType* file_info)
 {
+
     unsigned int search_uid = 0;
     char * end_ptr = NULL;
     struct passwd* pwd = NULL;
@@ -1001,6 +1029,15 @@ static boolean filter_user(__attribute__((unused)) const char* path_to_examine, 
     	return (search_uid == file_info->st_uid);
     }
     return TRUE;
+
+
+#if 0
+    if (FALSE == user_exist(params[current_param + 1]))
+    {
+        cleanup(TRUE);
+    }
+    return TRUE;
+#endif    
 }
 
 /**
@@ -1269,33 +1306,7 @@ static void combine_ls(const StatType* file_info)
     print_file_change_time(file_info);
 }
 
-#if 0
-/* mark unused parameters with __attribute__((unused)) otherwise compilation fails*/
-
-/**
- * \brief Check if there are valid parameters.
- *
- * \param params as given by user on program start.
- *
- * \return bool
- * \retval TRUE parameters are valid.
- * \retval FALSE parameters are invalid.
- **/
-boolean parameters_valid( const char * const* params)
-{
-    int i = 1; /* 1st parameter is program name, so start at index 1. */
-
-    while (params[i] != '\0')
-    {
-
-    }
-
-    return TRUE;
-}
-#endif
-
 /*
  * =================================================================== eof ==
  */
-
 
