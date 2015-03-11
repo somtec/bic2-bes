@@ -872,7 +872,7 @@ static char get_file_type(const StatType* file_info)
     }
     else if (S_ISREG(file_info->st_mode))
     {
-        result = '-';
+        result = 'f';
     }
     else if (S_ISCHR(file_info->st_mode))
     {
