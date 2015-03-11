@@ -8,7 +8,7 @@
  * @author Thomas Schmid <thomas.schmid@technikum-wien.at>
  * @date 2015/02/15
  *
- * @version SVN $Revision: 72$*
+ * @version SVN $Revision: 82$*
  *
  */
 
@@ -256,6 +256,14 @@ int main(int argc, const char* argv[])
                 cleanup(TRUE);
             }
         }
+
+        if (0 == strcmp(PARAM_STR_NOUSER, argv[current_argument]))
+        {
+            /* found -nouser */
+            current_argument += 1;
+            continue;
+        }
+
 
         if (0 == strcmp(PARAM_STR_NAME, argv[current_argument]))
         {
@@ -592,7 +600,7 @@ static int do_file(const char* file_name, StatType* file_info,
     int i = 1;
     boolean printed_print = FALSE;
     boolean printed_ls = FALSE;
-    boolean matched = TRUE;
+    boolean matched = FALSE;
     boolean filter = FALSE;
     boolean filtered = FALSE;
 
@@ -693,7 +701,7 @@ int init(const char** program_args)
         sprint_buffer = (char*) malloc(MAX_PRINT_BUFFER * sizeof(char));
         if (NULL == sprint_buffer)
         {
-            fprintf(stderr, "%s: %s\n", sprogram_arg0, "Out of memory.");
+            fprintf(stderr, "%s: %s\n", sprogram_arg0, "Out of memory.\n");
             return ENOMEM;
         }
     }
@@ -820,40 +828,6 @@ static boolean user_exist(const char* user_name, const boolean search_for_uid)
 
     return TRUE;
 
-#if 0
-    struct passwd* pwd = NULL;
-    char* end_userid = NULL;
-    uid_t uid = 0;
-
-    pwd = getpwnam(user_name);
-
-    if (NULL != pwd)
-    {
-        /* the user exist */
-        return TRUE;
-    }
-
-    /* is it a user id instead of a user name? */
-    errno = 0;
-    uid = (uid_t) strtol(user_name, &end_userid, USERID_BASE);
-    if (errno)
-    {
-        return FALSE;
-    }
-    if (0 == uid)
-    {
-        return FALSE;
-    }
-
-    pwd = getpwuid(uid);
-    if (NULL == pwd)
-    {
-        return FALSE;
-    }
-
-    return TRUE;
-
-#endif /* endif 0 */
 }
 
 /**
@@ -868,9 +842,6 @@ static boolean has_no_user(StatType* file_info)
     struct passwd* pwd = NULL;
     pwd = getpwuid(file_info->st_uid);
     return (pwd == NULL);
-#if 0
-    return (NULL != getpwuid(file_info->st_uid));
-#endif /* endif 0 */
 }
 
 /**
@@ -990,9 +961,6 @@ static boolean filter_nouser(__attribute__((unused)) const char* path_to_examine
     boolean result = FALSE;
     result = has_no_user(file_info);
     return (result);
-#if 0
-    return (has_no_user(file_info) == 1);
-#endif /* endif 0 */
 }
 
 /**
@@ -1050,14 +1018,6 @@ static boolean filter_user(__attribute__((unused)) const char* path_to_examine,
         return (search_uid == file_info->st_uid);
     }
     return TRUE;
-
-#if 0
-    if (FALSE == user_exist(params[current_param + 1]))
-    {
-        cleanup(TRUE);
-    }
-    return TRUE;
-#endif /* endif 0 */
 }
 
 /**
