@@ -943,10 +943,9 @@ static boolean filter_path(const char* path_to_examine, const int current_param,
 
     /**
      *  We match the actual file path against the pattern
-     *  delivered as argument to -name
+     *  delivered as argument to -path
      */
     buffer = strcpy(get_base_name_buffer(), path_to_examine);
-    buffer = basename(buffer);
 
     /* Do we have a pattern match? */
     return (0 == fnmatch(params[current_param + 1], buffer, FNM_PATHNAME));
