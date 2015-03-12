@@ -184,16 +184,16 @@ static boolean has_no_user(StatType* file_info);
 
 static char get_file_type(const StatType* file_info);
 
-static boolean filter_name(const char* path_to_examine, const int current_param,
-        const char* const * params, StatType* file_info);
-static boolean filter_path(const char* path_to_examine, const int current_param,
-        const char* const * params, __attribute__((unused)) StatType* file_info);
-static boolean filter_nouser(const char* path_to_examine, const int current_param,
-        const char* const * params, StatType* file_info);
-static boolean filter_user(const char* path_to_examine, const int current_param,
-        const char* const * params, StatType* file_info);
-static boolean filter_type(const char* path_to_examine, const int current_param,
-        const char* const * params, StatType* file_info);
+static boolean filter_name(const char* path_to_examine, const int current_param, const char* const * params,
+        StatType* file_info);
+static boolean filter_path(const char* path_to_examine, const int current_param, const char* const * params,
+        __attribute__((unused))  StatType* file_info);
+static boolean filter_nouser(const char* path_to_examine, const int current_param, const char* const * params,
+        StatType* file_info);
+static boolean filter_user(const char* path_to_examine, const int current_param, const char* const * params,
+        StatType* file_info);
+static boolean filter_type(const char* path_to_examine, const int current_param, const char* const * params,
+        StatType* file_info);
 
 static void print_file_change_time(const StatType* file_info);
 static void print_file_permissions(const StatType* file_info);
@@ -527,7 +527,7 @@ static void print_usage(void)
  *
  * \return void
  */
-static int do_dir(const char* dir_name, const char* const* params)
+static int do_dir(const char* dir_name, const char* const * params)
 {
     DIR* dirhandle = NULL;
     struct dirent* dirp = NULL;
@@ -536,7 +536,7 @@ static int do_dir(const char* dir_name, const char* const* params)
     dirhandle = opendir(dir_name);
     if (NULL == dirhandle)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': %s", dir_name,  strerror(errno));
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': %s", dir_name, strerror(errno));
         print_error(get_print_buffer());
         return EXIT_SUCCESS;
     }
@@ -546,6 +546,12 @@ static int do_dir(const char* dir_name, const char* const* params)
     {
         /* fetch each file from directory, until pointer is NULL */
         StatType file_info;
+
+        if ((strcmp(dirp->d_name, ".") == 0) || (strcmp(dirp->d_name, "..") == 0))
+        {
+            /* '.' and '..' are not interesting */
+            continue;
+        }
 
         /* build complete path to file (DIR/FILE) */
         snprintf(get_path_buffer(), get_max_path_length(), "%s/%s", dir_name, dirp->d_name);
@@ -561,43 +567,40 @@ static int do_dir(const char* dir_name, const char* const* params)
 
         if (S_ISDIR(file_info.st_mode))
         {
-            if ((strcmp(dirp->d_name, "..") != 0 && strcmp(dirp->d_name, ".") != 0))
-            {
-                char* next_path = NULL;
-                do_file(get_path_buffer(), &file_info, params);
+            char* next_path = NULL;
+            do_file(get_path_buffer(), &file_info, params);
 
 #if DEBUG_OUTPUT
-                snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                        "Move into directory %s.\n", dirp->d_name);
+            snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                    "Move into directory %s.\n", dirp->d_name);
 #endif /* DEBUG_OUTPUT */
-                debug_print(get_print_buffer());
-                /* recursion for each directory in current directory */
-                next_path = (char*) malloc(get_max_path_length() * sizeof(char));
-                if (NULL == next_path)
+            debug_print(get_print_buffer());
+            /* recursion for each directory in current directory */
+            next_path = (char*) malloc(get_max_path_length() * sizeof(char));
+            if (NULL == next_path)
+            {
+                print_error("malloc() failed: Out of memory.");
+                if (closedir(dirhandle) < 0)
                 {
-                    print_error("malloc() failed: Out of memory.");
-                    if (closedir(dirhandle) < 0)
-                    {
-                        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "closedir() failed: Can not close directory %s.",
-                                dir_name);
-                        print_error(get_print_buffer());
-                    }
-                    return EXIT_FAILURE;
+                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "closedir() failed: Can not close directory %s.",
+                            dir_name);
+                    print_error(get_print_buffer());
                 }
-                strcpy(next_path, get_path_buffer());
-                if (EXIT_FAILURE == do_dir(next_path, params))
+                return EXIT_FAILURE;
+            }
+            strcpy(next_path, get_path_buffer());
+            if (EXIT_FAILURE == do_dir(next_path, params))
+            {
+                if (closedir(dirhandle) < 0)
                 {
-                    if (closedir(dirhandle) < 0)
-                    {
-                        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "closedir() failed: Can not close directory %s.",
-                                dir_name);
-                        print_error(get_print_buffer());
-                    }
-                    free(next_path);
-                    return EXIT_FAILURE;
+                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "closedir() failed: Can not close directory %s.",
+                            dir_name);
+                    print_error(get_print_buffer());
                 }
                 free(next_path);
+                return EXIT_FAILURE;
             }
+            free(next_path);
         }
         else
         {
@@ -954,8 +957,8 @@ static char get_file_type(const StatType* file_info)
  * \retval TRUE name filter matched or not given
  * \retval FALSE no match found.
  */
-static boolean filter_name(const char* path_to_examine, const int current_param,
-        const char* const * params, __attribute__((unused)) StatType* file_info)
+static boolean filter_name(const char* path_to_examine, const int current_param, const char* const * params,
+        __attribute__((unused))  StatType* file_info)
 {
     char* buffer = NULL;
 
@@ -983,7 +986,7 @@ static boolean filter_name(const char* path_to_examine, const int current_param,
  * \retval FALSE no match found.
  */
 static boolean filter_path(const char* path_to_examine, const int current_param, const char* const * params,
-        __attribute__((unused)) StatType* file_info)
+        __attribute__((unused))  StatType* file_info)
 {
     char* buffer = NULL;
 
@@ -1010,8 +1013,8 @@ static boolean filter_path(const char* path_to_examine, const int current_param,
  * \return boolean TRUE name filter matched or not given, FALSE no match found.
  */
 static boolean filter_nouser(__attribute__((unused)) const char* path_to_examine,
-        __attribute__((unused)) const int current_param,
-        __attribute__((unused)) const char* const * params, StatType* file_info)
+        __attribute__((unused)) const int current_param, __attribute__((unused)) const char* const * params,
+        StatType* file_info)
 {
     boolean result = FALSE;
 
@@ -1032,9 +1035,8 @@ static boolean filter_nouser(__attribute__((unused)) const char* path_to_examine
  * \retval TRUE name filter matched or not given
  * \retval FALSE no match found.
  */
-static boolean filter_user(__attribute__((unused)) const char* path_to_examine,
-        const int current_param, const char* const * params,
-        __attribute__((unused)) StatType* file_info)
+static boolean filter_user(__attribute__((unused)) const char* path_to_examine, const int current_param,
+        const char* const * params, __attribute__((unused))  StatType* file_info)
 {
     unsigned int search_uid = 0;
     char * end_ptr = NULL;
@@ -1090,8 +1092,8 @@ static boolean filter_user(__attribute__((unused)) const char* path_to_examine,
  * \retval TRUE name filter matched or not given
  * \retval FALSE no match found.
  */
-static boolean filter_type(__attribute__((unused)) const char* path_to_examine,
-        const int current_param, const char* const * params, StatType* file_info)
+static boolean filter_type(__attribute__((unused)) const char* path_to_examine, const int current_param,
+        const char* const * params, StatType* file_info)
 {
     const char* parameter1;
 
@@ -1240,7 +1242,7 @@ static void print_user_group(const StatType* file_info)
     struct passwd* password;
     struct group* group_info;
 
-/* TODO use format string constant instead of hard coded strings */
+    /* TODO use format string constant instead of hard coded strings */
 
     /* Print user name */
     password = getpwuid(file_info->st_uid);
