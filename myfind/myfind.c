@@ -8,7 +8,7 @@
  * @author Thomas Schmid <thomas.schmid@technikum-wien.at>
  * @date 2015/02/15
  *
- * @version SVN $Revision: 82$*
+ * @version SVN $Revision: 86$*
  *
  */
 
@@ -184,16 +184,16 @@ static boolean has_no_user(StatType* file_info);
 
 static char get_file_type(const StatType* file_info);
 
-static boolean filter_name(const char* path_to_examine, const int current_param, const char* const * params,
-        StatType* file_info);
-static boolean filter_path(const char* path_to_examine, const int current_param, const char* const * params,
-        __attribute__((unused))   StatType* file_info);
-static boolean filter_nouser(const char* path_to_examine, const int current_param, const char* const * params,
-        StatType* file_info);
-static boolean filter_user(const char* path_to_examine, const int current_param, const char* const * params,
-        StatType* file_info);
-static boolean filter_type(const char* path_to_examine, const int current_param, const char* const * params,
-        StatType* file_info);
+static boolean filter_name(const char* path_to_examine, const int current_param,
+        const char* const * params, StatType* file_info);
+static boolean filter_path(const char* path_to_examine, const int current_param,
+        const char* const * params, __attribute__((unused)) StatType* file_info);
+static boolean filter_nouser(const char* path_to_examine, const int current_param,
+        const char* const * params, StatType* file_info);
+static boolean filter_user(const char* path_to_examine, const int current_param,
+        const char* const * params, StatType* file_info);
+static boolean filter_type(const char* path_to_examine, const int current_param,
+        const char* const * params, StatType* file_info);
 
 static void print_file_change_time(const StatType* file_info);
 static void print_file_permissions(const StatType* file_info);
@@ -209,8 +209,8 @@ static void combine_ls(const StatType* file_info);
  *
  * This is the main entry point for any C program.
  *
- * \param argc the number of arguments
- * \param argv the arguments itself (including the program name in argv[0])
+ * \param argc the number of arguments.
+ * \param argv the arguments itself (including the program name in argv[0]).
  *
  * \return EXIT_SUCCESS on success  EXIT_FAILURE on error.
  * \retval EXIT_SUCCESS Program ended successfully.
@@ -343,7 +343,6 @@ int main(int argc, const char* argv[])
             print_error(get_print_buffer());
             cleanup(TRUE);
         }
-
         ++current_argument;
     }
 
@@ -379,6 +378,7 @@ int main(int argc, const char* argv[])
         }
         else
         {
+            /* this is only we have just one parameter -> the file */
             result = do_file(argv[1], &stbuf, argv);
         }
     }
@@ -404,7 +404,15 @@ int main(int argc, const char* argv[])
  */
 void debug_print(const char* message)
 {
-    printf("DGB: %s", message);
+    int written = 0;
+
+    written = printf("DGB: %s", message);
+    if (written < 0)
+    {
+        fprintf(stderr, "DBG: debug_print() failed.");
+        cleanup(TRUE);
+    }
+
 }
 #endif /* DEBUG_OUTPUT != 0 */
 
@@ -471,26 +479,59 @@ inline static char* get_base_name_buffer(void)
  */
 static void print_usage(void)
 {
-    printf("Usage: %s <directory> <test-action> ...\n", get_program_argument_0());
-    printf("Arguments: -user <username|userid>\n");
-    printf("           -nouser\n");
-    printf("           -type [bcdpfls]\n");
-    printf("           -path <glob-pattern>\n");
-    printf("           -path <glob-pattern>\n");
-    printf("           -print\n");
-    printf("           -ls\n");
+    int written = 0;
+    written = printf("Usage: %s <directory> <test-action> ...\n", get_program_argument_0());
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
+    written = printf("Arguments: -user <username|userid>\n");
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
+    written = printf("           -nouser\n");
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
+    written = printf("           -type [bcdpfls]\n");
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
+    written = printf("           -path <glob-pattern>\n");
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
+    written = printf("           -path <glob-pattern>\n");
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
+    written = printf("           -print\n");
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
+    written = printf("           -ls\n");
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
 }
 
 /**
  *
  * \brief Iterates through directory.
  *
- * \param dir_name
- * \param params
+ * \param dir_name directory where to iterate through.
+ * \param params is the program argument vector.
  *
  * \return void
  */
-static int do_dir(const char* dir_name, const char* const * params)
+static int do_dir(const char* dir_name, const char* const* params)
 {
     DIR* dirhandle = NULL;
     struct dirent* dirp = NULL;
@@ -588,9 +629,12 @@ static int do_dir(const char* dir_name, const char* const * params)
  *
  * \brief Handle the file.
  *
- * \param file_name
+ * \param file_name is the filename which has to be checked against the find options.
  * \param params is the program argument vector.
- * \return void
+ *
+ * \return int represents the exit status of do_file.
+ * \retval EXIT_SUCCESS successful exit status.
+ * \retval EXIT_FAILURE failing exit status.
  */
 static int do_file(const char* file_name, StatType* file_info, const char* const * params)
 {
@@ -690,7 +734,8 @@ static int do_file(const char* file_name, StatType* file_info, const char* const
 /**
  * \brief Initializes the program.
  *
- * \param program_args contains the program arguments.
+ * \param program_args is the program argument vector.
+ *
  * \return EXIT_SUCCESS the program was successfully initialized,
  *  otherwise program startup failed.
  * \retval ENOMEM posix error out of memory.
@@ -781,7 +826,14 @@ void cleanup(boolean exit_program)
  */
 void print_error(const char* message)
 {
-    fprintf(stderr, "%s: %s\n", get_program_argument_0(), message);
+    int written = 0;
+
+    written = fprintf(stderr, "%s: %s\n", get_program_argument_0(), message);
+    if (written < 0)
+    {
+        /* sorry we can not print to error stream */
+        cleanup(TRUE);
+    }
 }
 
 /**
@@ -807,7 +859,7 @@ static boolean user_exist(const char* user_name, const boolean search_for_uid)
         /* the user exist */
         return TRUE;
     }
-    else if (search_for_uid == FALSE)
+    else if (FALSE == search_for_uid)
     {
         return FALSE;
     }
@@ -853,7 +905,7 @@ static boolean has_no_user(StatType* file_info)
  *
  * \param file_info as from file system.
  *
- * \return char representing file type .
+ * \return char representing file type.
  */
 static char get_file_type(const StatType* file_info)
 {
@@ -902,10 +954,12 @@ static char get_file_type(const StatType* file_info)
  * \param params Program parameter arguments given by user.
  * \param file_info as read from operating system.
  *
- * \return boolean TRUE name filter matched or not given, FALSE no match found.
+ * \return boolean result indicating filter has matched.
+ * \retval TRUE name filter matched or not given
+ * \retval FALSE no match found.
  */
-static boolean filter_name(const char* path_to_examine, const int current_param, const char* const * params,
-        __attribute__((unused))  StatType* file_info)
+static boolean filter_name(const char* path_to_examine, const int current_param,
+        const char* const * params, __attribute__((unused)) StatType* file_info)
 {
     char* buffer = NULL;
 
@@ -928,10 +982,12 @@ static boolean filter_name(const char* path_to_examine, const int current_param,
  * \param params Program parameter arguments given by user.
  * \param file_info as read from operating system.
  *
- * \return boolean TRUE name filter matched or not given, FALSE no match found.
+ * \return boolean result indicating filter has matched.
+ * \retval TRUE name filter matched or not given
+ * \retval FALSE no match found.
  */
 static boolean filter_path(const char* path_to_examine, const int current_param, const char* const * params,
-        __attribute__((unused))  StatType* file_info)
+        __attribute__((unused)) StatType* file_info)
 {
     char* buffer = NULL;
 
@@ -958,10 +1014,11 @@ static boolean filter_path(const char* path_to_examine, const int current_param,
  * \return boolean TRUE name filter matched or not given, FALSE no match found.
  */
 static boolean filter_nouser(__attribute__((unused)) const char* path_to_examine,
-        __attribute__((unused)) const int current_param, __attribute__((unused)) const char* const * params,
-        StatType* file_info)
+        __attribute__((unused)) const int current_param,
+        __attribute__((unused)) const char* const * params, StatType* file_info)
 {
     boolean result = FALSE;
+
     result = has_no_user(file_info);
     return (result);
 }
@@ -975,18 +1032,20 @@ static boolean filter_nouser(__attribute__((unused)) const char* path_to_examine
  * \param params Program parameter arguments given by user.
  * \param file_info as read from operating system.
  *
- * \return boolean TRUE name filter matched or not given, FALSE no match found.
+ * \return boolean result indicating filter has matched.
+ * \retval TRUE name filter matched or not given
+ * \retval FALSE no match found.
  */
-static boolean filter_user(__attribute__((unused)) const char* path_to_examine, const int current_param,
-        const char* const * params, __attribute__((unused))  StatType* file_info)
+static boolean filter_user(__attribute__((unused)) const char* path_to_examine,
+        const int current_param, const char* const * params,
+        __attribute__((unused)) StatType* file_info)
 {
-
     unsigned int search_uid = 0;
     char * end_ptr = NULL;
     struct passwd* pwd = NULL;
 
     search_uid = strtol(params[current_param + 1], &end_ptr, 10);
-    if (*end_ptr != '\0' || user_exist(params[current_param + 1], FALSE))
+    if ((*end_ptr != '\0') || user_exist(params[current_param + 1], FALSE))
     {
         /*  string to int conversion failed --> we have a username */
         /*  or special case --> username is pure numeric */
@@ -1006,7 +1065,7 @@ static boolean filter_user(__attribute__((unused)) const char* path_to_examine, 
         }
         else
         {
-            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "‘%s’ is not the name of a known user",
+            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s' is not the name of a known user",
                     params[current_param + 1]);
             print_error(get_print_buffer());
             cleanup(TRUE);
@@ -1031,10 +1090,12 @@ static boolean filter_user(__attribute__((unused)) const char* path_to_examine, 
  * \param params Program parameter arguments given by user.
  * \param file_info as read from operating system.
  *
- * \return boolean TRUE name filter matched or not given, FALSE no match found.
+ * \return boolean result indicating filter has matched.
+ * \retval TRUE name filter matched or not given
+ * \retval FALSE no match found.
  */
-static boolean filter_type(__attribute__((unused)) const char* path_to_examine, const int current_param,
-        const char* const * params, StatType* file_info)
+static boolean filter_type(__attribute__((unused)) const char* path_to_examine,
+        const int current_param, const char* const * params, StatType* file_info)
 {
     const char* parameter1;
 
@@ -1054,13 +1115,19 @@ void print_file_change_time(const StatType* file_info)
 {
     char * buffer_char = NULL;
     int i;
+    int written = 0;
+    size_t written_time = 0;
 
-    size_t written = 0;
     /* Convert the time into the local time format it. */
+    written_time = strftime(get_print_buffer(), MAX_PRINT_BUFFER - 1, "%b %d %H:%M", localtime(&file_info->st_mtime));
+    if (0 == written_time)
+    {
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "strftime() failed: Could not print file changed time\n.");
+        print_error(get_print_buffer());
+        return;
+    }
 
-    written = strftime(get_print_buffer(), MAX_PRINT_BUFFER - 1, "%b %d %H:%M", localtime(&file_info->st_mtime));
-
-    /* as  strftime Format Parameter %e is not supported on Annubis
+    /* as strftime Format Parameter %e is not supported on Annubis
      * we have to adjust the remove leading 0 in the day */
     buffer_char = get_print_buffer();
     for (i = 0; i < MAX_PRINT_BUFFER; i++)
@@ -1075,13 +1142,12 @@ void print_file_change_time(const StatType* file_info)
         }
     }
 
-    if (0 == written)
+    written = fprintf(stdout, "%s", get_print_buffer());
+    if (written < 0)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "strftime() failed: Could not print file changed time\n.");
-        print_error(get_print_buffer());
-        return;
+        print_error("fprintf() failed: Could not write time to stdout.\n");
     }
-    fprintf(stdout, "%s", get_print_buffer());
+
 }
 
 /**
@@ -1095,6 +1161,7 @@ void print_file_permissions(const StatType* file_info)
 {
     /* Print file type */
     char file_type_character = '\0';
+
     file_type_character = get_file_type(file_info);
     if (file_type_character == 'f')
     {
@@ -1113,12 +1180,12 @@ void print_file_permissions(const StatType* file_info)
     }
     else if ((file_info->st_mode & S_ISUID) && (file_info->st_mode & S_IXUSR))
     {
-        /*UID-Bit && Execute-Bit*/
+        /* UID-Bit && Execute-Bit */
         fprintf(stdout, "%c", (file_info->st_mode & S_ISUID ? 's' : '-'));
     }
     else
     {
-        /*UID-Bit && !Execute-Bit*/
+        /* UID-Bit && !Execute-Bit */
         fprintf(stdout, "%c", (file_info->st_mode & S_ISUID ? 'S' : '-'));
     }
 
@@ -1128,17 +1195,17 @@ void print_file_permissions(const StatType* file_info)
 
     if (!(file_info->st_mode & S_ISGID))
     {
-        /*no GID-Bit */
+        /* no GID-Bit */
         fprintf(stdout, "%c", (file_info->st_mode & S_IXGRP ? 'x' : '-'));
     }
     else if ((file_info->st_mode & S_ISGID) && (file_info->st_mode & S_IXGRP))
     {
-        /*GID-Bit && Execute-Bit */
+        /* GID-Bit && Execute-Bit */
         fprintf(stdout, "%c", (file_info->st_mode & S_ISGID ? 's' : '-'));
     }
     else
     {
-        /*GID-Bit && !Execute-Bit*/
+        /* GID-Bit && !Execute-Bit */
         fprintf(stdout, "%c", (file_info->st_mode & S_ISGID ? 'S' : '-'));
     }
 
@@ -1148,17 +1215,17 @@ void print_file_permissions(const StatType* file_info)
 
     if (!(file_info->st_mode & S_ISVTX))
     {
-        /*Sticky-Bit*/
+        /* Sticky-Bit */
         fprintf(stdout, "%c", (file_info->st_mode & S_IXOTH ? 'x' : '-'));
     }
     else if ((file_info->st_mode & S_ISVTX) && (file_info->st_mode & S_IXOTH))
     {
-        /*Sticky-Bit && Execute-Bit*/
+        /* Sticky-Bit && Execute-Bit */
         fprintf(stdout, "%c", (file_info->st_mode & S_ISVTX ? 't' : '-'));
     }
     else
     {
-        /*Sticky-Bit && !Execute-Bit*/
+        /* Sticky-Bit && !Execute-Bit */
         fprintf(stdout, "%c", (file_info->st_mode & S_ISVTX ? 'T' : '-'));
     }
 
@@ -1176,6 +1243,8 @@ static void print_user_group(const StatType* file_info)
 {
     struct passwd* password;
     struct group* group_info;
+
+/* TODO use format string constant instead of hard coded strings */
 
     /* Print user name */
     password = getpwuid(file_info->st_uid);
@@ -1223,7 +1292,6 @@ static void print_detail_ls(const char* file_path, StatType* file_info)
  * \brief Standard print, used by every match. Prints on standard out.
  *
  * \param file_path Fully qualified file name with path read out from operating system.
- * \param file_info with all file attributes read out from operating system.
  *
  * \return void
  **/
