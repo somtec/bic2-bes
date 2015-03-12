@@ -364,6 +364,7 @@ int main(int argc, const char* argv[])
     /*get information about the file and catch errors*/
     if (-1 != lstat(get_path_buffer(), &stbuf))
     {
+        result = do_file(argv[1], &stbuf, argv);
         if (S_ISDIR(stbuf.st_mode))
         {
             found_dir = get_path_buffer();
@@ -375,11 +376,6 @@ int main(int argc, const char* argv[])
                 strcpy(start_dir, ".");
             }
             result = do_dir(start_dir, argv);
-        }
-        else
-        {
-            /* this is only we have just one parameter -> the file */
-            result = do_file(argv[1], &stbuf, argv);
         }
     }
 
