@@ -558,8 +558,7 @@ static int do_dir(const char* dir_name, const char* const * params)
         /* get information about the file and catch errors */
         if (-1 == lstat(get_path_buffer(), &file_info))
         {
-            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "lstat() failed: The file %s doesn't exist.",
-                    get_path_buffer());
+            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': %s", get_path_buffer(), strerror(errno));
             print_error(get_print_buffer());
             /* check next file */
             continue;
