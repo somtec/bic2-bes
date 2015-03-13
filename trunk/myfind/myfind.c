@@ -6,7 +6,7 @@
  * @author Andrea Maierhofer (aka Windows fangirl) <andrea.maierhofer@technikum-wien.at>
  * @author Reinhard Mayr <reinhard.mayr@technikum-wien.at>
  * @author Thomas Schmid <thomas.schmid@technikum-wien.at>
- * @date 2015/02/15
+ * @date 2015/03/13
  *
  * @version SVN $Revision: 86$*
  *
@@ -406,7 +406,6 @@ void debug_print(const char* message)
     if (written < 0)
     {
         fprintf(stderr, "DBG: debug_print() failed.");
-        cleanup(TRUE);
     }
 
 }
@@ -527,7 +526,7 @@ static void print_usage(void)
  *
  * \return void
  */
-static int do_dir(const char* dir_name, const char* const * params)
+static int do_dir(const char* dir_name, const char* const* params)
 {
     DIR* dirhandle = NULL;
     struct dirent* dirp = NULL;
@@ -644,6 +643,10 @@ static int do_file(const char* file_name, StatType* file_info, const char* const
     boolean matched = FALSE;
     boolean filter = FALSE;
     boolean filtered = FALSE;
+
+/* TODO optimize while loop string compares, in the first loop remember if a strcmp machted
+ * already, next time do short circuit evaluation (found_type || (strcmp(params[i], PARAM_STR_TYPE) == 0)) etc.
+ */
 
     while (params[i] != NULL)
     {
@@ -790,7 +793,8 @@ int init(const char** program_args)
 /**
  * \brief Cleanup the program.
  *
- * \params exit_program when set exit program immediately with EXIT_FAILURE.
+ * \params exit_program when set to TRUE exit program immediately with EXIT_FAILURE.
+ *
  *
  * \return void
  */
@@ -1159,6 +1163,7 @@ void print_file_change_time(const StatType* file_info)
 void print_file_permissions(const StatType* file_info)
 {
     /* Print file type */
+    int written = 0;
     char file_type_character = '\0';
 
     file_type_character = get_file_type(file_info);
@@ -1166,69 +1171,139 @@ void print_file_permissions(const StatType* file_info)
     {
         file_type_character = '-';
     }
-    fprintf(stdout, "%c", file_type_character);
+
+    written = fprintf(stdout, "%c", file_type_character);
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
 
     /* Print user permissions */
-    fprintf(stdout, "%c", (file_info->st_mode & S_IRUSR ? 'r' : '-'));
-    fprintf(stdout, "%c", (file_info->st_mode & S_IWUSR ? 'w' : '-'));
+    written = fprintf(stdout, "%c", (file_info->st_mode & S_IRUSR ? 'r' : '-'));
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
+
+    written = fprintf(stdout, "%c", (file_info->st_mode & S_IWUSR ? 'w' : '-'));
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
 
     if (!(file_info->st_mode & S_ISUID))
     {
         /*no UID-Bit */
-        fprintf(stdout, "%c", (file_info->st_mode & S_IXUSR ? 'x' : '-'));
+        written = fprintf(stdout, "%c", (file_info->st_mode & S_IXUSR ? 'x' : '-'));
+        if (written < 0)
+        {
+            print_error(strerror(errno));
+        }
     }
     else if ((file_info->st_mode & S_ISUID) && (file_info->st_mode & S_IXUSR))
     {
         /* UID-Bit && Execute-Bit */
-        fprintf(stdout, "%c", (file_info->st_mode & S_ISUID ? 's' : '-'));
+        written = fprintf(stdout, "%c", (file_info->st_mode & S_ISUID ? 's' : '-'));
+        if (written < 0)
+        {
+            print_error(strerror(errno));
+        }
     }
     else
     {
         /* UID-Bit && !Execute-Bit */
-        fprintf(stdout, "%c", (file_info->st_mode & S_ISUID ? 'S' : '-'));
+        written = fprintf(stdout, "%c", (file_info->st_mode & S_ISUID ? 'S' : '-'));
+        if (written < 0)
+        {
+            print_error(strerror(errno));
+        }
     }
 
     /* Print group permissions */
-    fprintf(stdout, "%c", (file_info->st_mode & S_IRGRP ? 'r' : '-'));
-    fprintf(stdout, "%c", (file_info->st_mode & S_IWGRP ? 'w' : '-'));
+    written = fprintf(stdout, "%c", (file_info->st_mode & S_IRGRP ? 'r' : '-'));
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
+    written = fprintf(stdout, "%c", (file_info->st_mode & S_IWGRP ? 'w' : '-'));
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
 
     if (!(file_info->st_mode & S_ISGID))
     {
         /* no GID-Bit */
-        fprintf(stdout, "%c", (file_info->st_mode & S_IXGRP ? 'x' : '-'));
+        written = fprintf(stdout, "%c", (file_info->st_mode & S_IXGRP ? 'x' : '-'));
+        if (written < 0)
+        {
+            print_error(strerror(errno));
+        }
     }
     else if ((file_info->st_mode & S_ISGID) && (file_info->st_mode & S_IXGRP))
     {
         /* GID-Bit && Execute-Bit */
-        fprintf(stdout, "%c", (file_info->st_mode & S_ISGID ? 's' : '-'));
+        written = fprintf(stdout, "%c", (file_info->st_mode & S_ISGID ? 's' : '-'));
+        if (written < 0)
+        {
+            print_error(strerror(errno));
+        }
     }
     else
     {
         /* GID-Bit && !Execute-Bit */
-        fprintf(stdout, "%c", (file_info->st_mode & S_ISGID ? 'S' : '-'));
+        written = fprintf(stdout, "%c", (file_info->st_mode & S_ISGID ? 'S' : '-'));
+        if (written < 0)
+        {
+            print_error(strerror(errno));
+        }
     }
 
     /* Print other permissions */
-    fprintf(stdout, "%c", (file_info->st_mode & S_IROTH ? 'r' : '-'));
-    fprintf(stdout, "%c", (file_info->st_mode & S_IWOTH ? 'w' : '-'));
+    written = fprintf(stdout, "%c", (file_info->st_mode & S_IROTH ? 'r' : '-'));
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
+    written = fprintf(stdout, "%c", (file_info->st_mode & S_IWOTH ? 'w' : '-'));
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
 
     if (!(file_info->st_mode & S_ISVTX))
     {
         /* Sticky-Bit */
-        fprintf(stdout, "%c", (file_info->st_mode & S_IXOTH ? 'x' : '-'));
+        written = fprintf(stdout, "%c", (file_info->st_mode & S_IXOTH ? 'x' : '-'));
+        if (written < 0)
+        {
+            print_error(strerror(errno));
+        }
     }
     else if ((file_info->st_mode & S_ISVTX) && (file_info->st_mode & S_IXOTH))
     {
         /* Sticky-Bit && Execute-Bit */
-        fprintf(stdout, "%c", (file_info->st_mode & S_ISVTX ? 't' : '-'));
+        written = fprintf(stdout, "%c", (file_info->st_mode & S_ISVTX ? 't' : '-'));
+        if (written < 0)
+        {
+            print_error(strerror(errno));
+        }
     }
     else
     {
         /* Sticky-Bit && !Execute-Bit */
-        fprintf(stdout, "%c", (file_info->st_mode & S_ISVTX ? 'T' : '-'));
+        written = fprintf(stdout, "%c", (file_info->st_mode & S_ISVTX ? 'T' : '-'));
+        if (written < 0)
+        {
+            print_error(strerror(errno));
+        }
     }
 
-    fprintf(stdout, "  ");
+    written = fprintf(stdout, "  ");
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
 }
 
 /**
@@ -1242,6 +1317,7 @@ static void print_user_group(const StatType* file_info)
 {
     struct passwd* password;
     struct group* group_info;
+    int written = 0;
 
     /* TODO use format string constant instead of hard coded strings */
 
@@ -1249,26 +1325,46 @@ static void print_user_group(const StatType* file_info)
     password = getpwuid(file_info->st_uid);
     if (NULL != password)
     {
-        fprintf(stdout, "%5s", password->pw_name);
+        written = fprintf(stdout, "%5s", password->pw_name);
+        if (written < 0)
+        {
+            print_error(strerror(errno));
+        }
     }
     else
     {
-        fprintf(stdout, "%7d", file_info->st_uid);
+        written = fprintf(stdout, "%7d", file_info->st_uid);
+        if (written < 0)
+        {
+            print_error(strerror(errno));
+        }
     }
 
     /* Print group name */
     group_info = getgrgid(file_info->st_gid);
     if (NULL != password)
     {
-        fprintf(stdout, "%9s", group_info->gr_name);
+        written = fprintf(stdout, "%9s", group_info->gr_name);
+        if (written < 0)
+        {
+            print_error(strerror(errno));
+        }
     }
     else if (NULL != group_info)
     {
-        fprintf(stdout, "%9s", group_info->gr_name);
+        written = fprintf(stdout, "%9s", group_info->gr_name);
+        if (written < 0)
+        {
+            print_error(strerror(errno));
+        }
     }
     else
     {
-        fprintf(stdout, "%9d", file_info->st_gid);
+        written = fprintf(stdout, "%9d", file_info->st_gid);
+        if (written < 0)
+        {
+            print_error(strerror(errno));
+        }
     }
 }
 
@@ -1282,9 +1378,19 @@ static void print_user_group(const StatType* file_info)
  **/
 static void print_detail_ls(const char* file_path, StatType* file_info)
 {
+    int written = 0;
+
     combine_ls(file_info);
-    printf(" ");
-    printf("%s\n", file_path);
+    written = printf(" ");
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
+    written = printf("%s\n", file_path);
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
 }
 
 /**
@@ -1296,7 +1402,12 @@ static void print_detail_ls(const char* file_path, StatType* file_info)
  **/
 static void print_detail_print(const char* file_path)
 {
-    printf("%s\n", file_path);
+    int written = 0;
+    written = printf("%s\n", file_path);
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
 }
 
 /**
@@ -1310,21 +1421,39 @@ static void print_detail_print(const char* file_path)
  **/
 static void combine_ls(const StatType* file_info)
 {
+    int written = 0;
+
     /* Print i-node */
-    fprintf(stdout, "%6lu", (unsigned long) file_info->st_ino);
+    written = fprintf(stdout, "%6lu", (unsigned long) file_info->st_ino);
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
 
     /* Print number of blocks */
-    fprintf(stdout, "%5lu ", (unsigned long) file_info->st_blocks / 2);
+    written = fprintf(stdout, "%5lu ", (unsigned long) file_info->st_blocks / 2);
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
 
     print_file_permissions(file_info);
 
     /* Print number of hard links */
-    fprintf(stdout, "%2lu", (unsigned long) file_info->st_nlink);
+    written = fprintf(stdout, "%2lu", (unsigned long) file_info->st_nlink);
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
 
     print_user_group(file_info);
 
     /* Print file size */
-    fprintf(stdout, "%13lu ", (unsigned long) file_info->st_size);
+    written = fprintf(stdout, "%13lu ", (unsigned long) file_info->st_size);
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
 
     print_file_change_time(file_info);
 }
