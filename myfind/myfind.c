@@ -581,8 +581,8 @@ static int do_dir(const char* dir_name, const char* const * params)
                 print_error("malloc() failed: Out of memory.");
                 if (closedir(dirhandle) < 0)
                 {
-                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "closedir() failed: Can not close directory %s.",
-                            dir_name);
+                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': closedir() failed: %s.",
+                            dir_name,  strerror(errno));
                     print_error(get_print_buffer());
                 }
                 return EXIT_FAILURE;
@@ -592,8 +592,8 @@ static int do_dir(const char* dir_name, const char* const * params)
             {
                 if (closedir(dirhandle) < 0)
                 {
-                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "closedir() failed: Can not close directory %s.",
-                            dir_name);
+                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': closedir() failed: %s.",
+                            dir_name,  strerror(errno));
                     print_error(get_print_buffer());
                 }
                 free(next_path);
@@ -605,17 +605,18 @@ static int do_dir(const char* dir_name, const char* const * params)
         {
             do_file(get_path_buffer(), &file_info, params);
         }
+        errno = 0; /* reset errno for next call to readdir() */
     }
     if (0 != errno)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "readdir() failed: The dirstream argument is not valid %s.",
-                dir_name);
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': readdir() failed: %s.",
+                dir_name, strerror(errno));
         print_error(get_print_buffer());
     }
 
     if (closedir(dirhandle) < 0)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "closedir() failed: Can not close directory %s.", dir_name);
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s':closedir() failed: %s.", dir_name, strerror(errno));
         print_error(get_print_buffer());
     }
 
