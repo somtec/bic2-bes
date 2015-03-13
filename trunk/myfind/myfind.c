@@ -16,21 +16,6 @@
  * -------------------------------------------------------------- review --
  */
 
-/* TODO abort operation if command is parsed successfully or give an error if there are superfluous arguments. /
- Parsen und herausfinden von falschen  Argumente von Links nach rechts
- damit die Fehlerausgabe passt und entsprechend das Programm an dieser Stelle abbricht.
- */
-/* TODO Review unseres Programms und fehlendes Errorhandling einbauen /
- Abfragen der globalen Variablen errno nach bestimmten Systemaufrufen;
- */
-/* TODO Test it more seriously and more complete. */
-/* TODO Review it and check the source against the rules at /
- *       https://cis.technikum-wien.at/documents/bic/2/bes/semesterplan/lu/c-rules.html
- *
- * TODO supress ls output for character and block files
- * TODO examine when to devide by 2 for blocks
- */
-
 /*
  * -------------------------------------------------------------- includes --
  */
@@ -173,23 +158,19 @@ static void print_error(const char* message);
 static int init(const char** program_args);
 static void cleanup(boolean exit);
 
-static int do_file(const char* file_name, StatType* file_info, const char* const* params);
-static int do_dir(const char* dir_name, const char* const* params);
+static int do_file(const char* file_name, StatType* file_info, const char* const * params);
+static int do_dir(const char* dir_name, const char* const * params);
 
 static boolean user_exist(const char* user_name, const boolean search_for_uid);
 static boolean has_no_user(StatType* file_info);
 
 static char get_file_type(const StatType* file_info);
 
-static boolean filter_name(const char* path_to_examine, const int current_param,
-        const char* const* params);
-static boolean filter_path(const char* path_to_examine, const int current_param,
-        const char* const* params);
+static boolean filter_name(const char* path_to_examine, const int current_param, const char* const * params);
+static boolean filter_path(const char* path_to_examine, const int current_param, const char* const * params);
 static boolean filter_nouser(StatType* file_info);
-static boolean filter_user(const int current_param, const char* const* params,
-        StatType* file_info);
-static boolean filter_type(const int current_param, const char* const* params,
-        StatType* file_info);
+static boolean filter_user(const int current_param, const char* const * params, StatType* file_info);
+static boolean filter_type(const int current_param, const char* const * params, StatType* file_info);
 
 static void print_file_change_time(const StatType* file_info);
 static void print_file_permissions(const StatType* file_info);
@@ -217,6 +198,7 @@ int main(int argc, const char* argv[])
     int result = EXIT_FAILURE;
     char* start_dir = NULL;
     char* found_dir = NULL;
+    boolean path_given = FALSE;
 
     StatType stbuf;
     int current_argument = 1; /* the first argument is the program name anyway */
@@ -233,6 +215,8 @@ int main(int argc, const char* argv[])
         print_usage();
         return EXIT_SUCCESS;
     }
+    test_char = *argv[1];
+    path_given = (test_char == '-') ? FALSE : TRUE;
 
     /* check the input arguments first */
     while (current_argument < argc)
@@ -358,7 +342,12 @@ int main(int argc, const char* argv[])
 
     parameter_directory_given = TRUE;
     /*get information about the file and catch errors*/
-    if (-1 != lstat(get_path_buffer(), &stbuf))
+    if (!path_given)
+    {
+        parameter_directory_given = FALSE;
+        result = do_dir(".", argv);
+    }
+    else if (-1 != lstat(get_path_buffer(), &stbuf))
     {
         result = do_file(argv[1], &stbuf, argv);
         if (S_ISDIR(stbuf.st_mode))
@@ -522,7 +511,7 @@ static void print_usage(void)
  *
  * \return void
  */
-static int do_dir(const char* dir_name, const char* const* params)
+static int do_dir(const char* dir_name, const char* const * params)
 {
     DIR* dirhandle = NULL;
     struct dirent* dirp = NULL;
@@ -576,8 +565,8 @@ static int do_dir(const char* dir_name, const char* const* params)
                 print_error("malloc() failed: Out of memory.");
                 if (closedir(dirhandle) < 0)
                 {
-                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': closedir() failed: %s.",
-                            dir_name,  strerror(errno));
+                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': closedir() failed: %s.", dir_name,
+                            strerror(errno));
                     print_error(get_print_buffer());
                 }
                 return EXIT_FAILURE;
@@ -587,8 +576,8 @@ static int do_dir(const char* dir_name, const char* const* params)
             {
                 if (closedir(dirhandle) < 0)
                 {
-                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': closedir() failed: %s.",
-                            dir_name,  strerror(errno));
+                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': closedir() failed: %s.", dir_name,
+                            strerror(errno));
                     print_error(get_print_buffer());
                 }
                 free(next_path);
@@ -604,8 +593,7 @@ static int do_dir(const char* dir_name, const char* const* params)
     }
     if (0 != errno)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': readdir() failed: %s.",
-                dir_name, strerror(errno));
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': readdir() failed: %s.", dir_name, strerror(errno));
         print_error(get_print_buffer());
     }
 
@@ -631,19 +619,28 @@ static int do_dir(const char* dir_name, const char* const* params)
  * \retval EXIT_SUCCESS successful exit status.
  * \retval EXIT_FAILURE failing exit status.
  */
-static int do_file(const char* file_name, StatType* file_info, const char* const* params)
+static int do_file(const char* file_name, StatType* file_info, const char* const * params)
 {
 
     int i = 1;
     boolean printed_print = FALSE;
     boolean printed_ls = FALSE;
+    boolean to_print_ls = FALSE;
     boolean matched = FALSE;
     boolean filter = FALSE;
     boolean filtered = FALSE;
+    boolean path_given = FALSE;
+    char test_char;
 
-/* TODO optimize while loop string compares, in the first loop remember if a strcmp machted
- * already, next time do short circuit evaluation (found_type || (strcmp(params[i], PARAM_STR_TYPE) == 0)) etc.
- */
+    /* TODO optimize while loop string compares, in the first loop remember if a strcmp machted
+     * already, next time do short circuit evaluation (found_type || (strcmp(params[i], PARAM_STR_TYPE) == 0)) etc.
+     */
+    test_char = *params[1];
+    path_given = (test_char == '-') ? FALSE : TRUE;
+    if (path_given)
+    {
+        matched = TRUE;
+    }
 
     while (params[i] != NULL)
     {
@@ -651,77 +648,79 @@ static int do_file(const char* file_name, StatType* file_info, const char* const
         if (strcmp(params[i], PARAM_STR_TYPE) == 0)
         {
             filter = filter_type(i, params, file_info);
-            matched = matched || filter;
+            matched = matched && filter;
             filtered = TRUE;
             ++i;
+            continue;
         }
 
         if (strcmp(params[i], PARAM_STR_USER) == 0)
         {
             filter = filter_user(i, params, file_info);
-            matched = matched || filter;
+            matched = matched && filter;
             filtered = TRUE;
             ++i;
+            continue;
         }
 
         if (strcmp(params[i], PARAM_STR_NOUSER) == 0)
         {
             filter = filter_nouser(file_info);
-            matched = matched || filter;
+            matched = matched && filter;
             filtered = TRUE;
+            ++i;
+            continue;
         }
 
         if (strcmp(params[i], PARAM_STR_NAME) == 0)
         {
             filter = filter_name(file_name, i, params);
-            matched = matched || filter;
+            matched = matched && filter;
             filtered = TRUE;
             ++i;
+            continue;
         }
 
         if (strcmp(params[i], PARAM_STR_PATH) == 0)
         {
             filter = filter_path(file_name, i, params);
-            matched = matched || filter;
+            matched = matched && filter;
             filtered = TRUE;
             ++i;
+            continue;
         }
 
         if (strcmp(params[i], PARAM_STR_LS) == 0)
         {
-            if (matched)
+            if (filtered && matched)
             {
                 print_detail_ls(file_name, file_info);
                 printed_ls = TRUE;
             }
-
+            else
+            {
+                to_print_ls = TRUE;
+            }
         }
         if (strcmp(params[i], PARAM_STR_PRINT) == 0)
         {
-            if (matched)
+            if (filtered && matched)
             {
                 print_detail_print(file_name);
                 printed_print = TRUE;
             }
         }
+
         ++i;
     }
 
-    if (filtered)
+    if ((matched && !printed_print && !printed_ls) || (!filtered))
     {
-        if (matched && !printed_print && !printed_ls)
+        if (to_print_ls)
         {
-            print_detail_print(file_name);
-        }
-    }
-    else
-    {
-        if (strcmp(params[i - 1], PARAM_STR_LS) == 0)
-        {
-            /* special case: myfind filename -ls */
             print_detail_ls(file_name, file_info);
         }
-        else if (!printed_print && !printed_ls)
+        else
         {
             print_detail_print(file_name);
         }
@@ -958,8 +957,7 @@ static char get_file_type(const StatType* file_info)
  * \retval TRUE name filter matched or not given
  * \retval FALSE no match found.
  */
-static boolean filter_name(const char* path_to_examine, const int current_param,
-        const char* const* params)
+static boolean filter_name(const char* path_to_examine, const int current_param, const char* const * params)
 {
     char* buffer = NULL;
 
@@ -985,8 +983,7 @@ static boolean filter_name(const char* path_to_examine, const int current_param,
  * \retval TRUE name filter matched or not given
  * \retval FALSE no match found.
  */
-static boolean filter_path(const char* path_to_examine, const int current_param,
-        const char* const* params)
+static boolean filter_path(const char* path_to_examine, const int current_param, const char* const * params)
 {
     char* buffer = NULL;
 
@@ -1030,8 +1027,7 @@ static boolean filter_nouser(StatType* file_info)
  * \retval TRUE name filter matched or not given
  * \retval FALSE no match found.
  */
-static boolean filter_user(const int current_param, const char* const * params,
-        StatType* file_info)
+static boolean filter_user(const int current_param, const char* const * params, StatType* file_info)
 {
     unsigned int search_uid = 0;
     char * end_ptr = NULL;
@@ -1087,8 +1083,8 @@ static boolean filter_user(const int current_param, const char* const * params,
  * \retval TRUE name filter matched or not given
  * \retval FALSE no match found.
  */
-static boolean filter_type(const int current_param, const char* const * params,
-        StatType* file_info)
+
+static boolean filter_type(const int current_param, const char* const * params, StatType* file_info)
 {
     const char* parameter1;
 
