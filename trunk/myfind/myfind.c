@@ -8,7 +8,7 @@
  * @author Thomas Schmid <thomas.schmid@technikum-wien.at>
  * @date 2015/03/13
  *
- * @version SVN $Revision: 86$*
+ * @version SVN $Revision: 99$*
  *
  */
 
@@ -40,35 +40,12 @@
 /*
  * --------------------------------------------------------------- defines --
  */
-/** DEBUG_OUTPUT 0 is without debug_print(), else debug_print() function active. */
+/** DEBUG_OUTPUT 0 is without debug_print(), else debug_print() function is active. */
 #define DEBUG_OUTPUT 0
 
 /*
  * -------------------------------------------------------------- typedefs --
  */
-
-/**
- The enumeration of filtered file type .
- */
-typedef enum FileTypeEnum
-{
-    /** File type unknown */
-    FILE_TYPE_UNKNOWN,
-    /** File type block, e. g. hard disk. */
-    FILE_TYPE_BLOCK,
-    /** File type char e. g. terminal. */
-    FILE_TYPE_CHAR,
-    /** File type directory. */
-    FILE_TYPE_DIRECTORY,
-    /** File type pipe e. g. FIFO. */
-    FILE_TYPE_PIPE,
-    /** File type regular file. */
-    FILE_TYPE_FILE,
-    /** File type link e. g. symbolic link. */
-    FILE_TYPE_LINK,
-    /** File type socket e. g. stream for communication. */
-    FILE_TYPE_SOCKET
-} FileType;
 
 /**
  * The struct type for stat return value.
@@ -100,10 +77,10 @@ static char* spath_buffer = NULL;
 /** Buffer for getting the base name of a given directory. */
 static char* sbasename_buffer = NULL;
 
-/** Maximum path length of file system */
+/** Maximum path length of file system. */
 static long int smax_path = 0;
 
-/** Current program arguments */
+/** Current program arguments. */
 static const char* sprogram_arg0 = NULL;
 
 /** Maximum buffer size for print buffer.*/
@@ -132,7 +109,7 @@ static const char* PARAM_STR_LS = "-ls";
 /** User text for supported parameter user. */
 static const char* PARAM_STR_PRINT = "-print";
 
-/** The user has given a directory after the program name */
+/** The user has given a directory after the program name. */
 static int parameter_directory_given = TRUE;
 
 /* ------------------------------------------------------------- functions --
@@ -158,19 +135,21 @@ static void print_error(const char* message);
 static int init(const char** program_args);
 static void cleanup(boolean exit);
 
-static int do_file(const char* file_name, StatType* file_info, const char* const * params);
-static int do_dir(const char* dir_name, const char* const * params);
+static int do_file(const char* file_name, StatType* file_info, const char* const* params);
+static int do_dir(const char* dir_name, const char* const* params);
 
 static boolean user_exist(const char* user_name, const boolean search_for_uid);
 static boolean has_no_user(StatType* file_info);
 
 static char get_file_type(const StatType* file_info);
 
-static boolean filter_name(const char* path_to_examine, const int current_param, const char* const * params);
-static boolean filter_path(const char* path_to_examine, const int current_param, const char* const * params);
+static boolean filter_name(const char* path_to_examine, const int current_param,
+        const char* const* params);
+static boolean filter_path(const char* path_to_examine, const int current_param,
+        const char* const* params);
 static boolean filter_nouser(StatType* file_info);
-static boolean filter_user(const int current_param, const char* const * params, StatType* file_info);
-static boolean filter_type(const int current_param, const char* const * params, StatType* file_info);
+static boolean filter_user(const int current_param, const char* const* params, StatType* file_info);
+static boolean filter_type(const int current_param, const char* const* params, StatType* file_info);
 
 static void print_file_change_time(const StatType* file_info);
 static void print_file_permissions(const StatType* file_info);
@@ -293,7 +272,8 @@ int main(int argc, const char* argv[])
                 if (strlen(next_argument) > 1)
                 {
                     snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
-                            "Argument of -type must be one character of these `%s'.", PARAM_STR_TYPE_VALS);
+                            "Argument of -type must be one character of these `%s'.",
+                            PARAM_STR_TYPE_VALS);
                     print_error(get_print_buffer());
                     return EXIT_FAILURE;
                 }
@@ -301,8 +281,9 @@ int main(int argc, const char* argv[])
                 test_char = (int) (*next_argument);
                 if (NULL == strchr(PARAM_STR_TYPE_VALS, test_char))
                 {
-                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Argument -type unknown options of %s: %c.",
-                            PARAM_STR_TYPE, *next_argument);
+                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                            "Argument -type unknown options of %s: %c.", PARAM_STR_TYPE,
+                            *next_argument);
                     print_error(get_print_buffer());
                     return EXIT_FAILURE;
                 }
@@ -319,7 +300,8 @@ int main(int argc, const char* argv[])
         if (current_argument > 1)
         {
             /* we have an unknown option */
-            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Invalid predicate `%s'.", argv[current_argument]);
+            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "Invalid predicate `%s'.",
+                    argv[current_argument]);
             print_error(get_print_buffer());
             cleanup(TRUE);
         }
@@ -463,6 +445,7 @@ inline static char* get_base_name_buffer(void)
 static void print_usage(void)
 {
     int written = 0;
+
     written = printf("Usage: %s <directory> <test-action> ...\n", get_program_argument_0());
     if (written < 0)
     {
@@ -514,7 +497,7 @@ static void print_usage(void)
  *
  * \return void
  */
-static int do_dir(const char* dir_name, const char* const * params)
+static int do_dir(const char* dir_name, const char* const* params)
 {
     DIR* dirhandle = NULL;
     struct dirent* dirp = NULL;
@@ -545,7 +528,8 @@ static int do_dir(const char* dir_name, const char* const * params)
         /* get information about the file and catch errors */
         if (-1 == lstat(get_path_buffer(), &file_info))
         {
-            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': %s", get_path_buffer(), strerror(errno));
+            snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': %s", get_path_buffer(),
+                    strerror(errno));
             print_error(get_print_buffer());
             /* check next file */
             continue;
@@ -568,8 +552,8 @@ static int do_dir(const char* dir_name, const char* const * params)
                 print_error("malloc() failed: Out of memory.");
                 if (closedir(dirhandle) < 0)
                 {
-                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': closedir() failed: %s.", dir_name,
-                            strerror(errno));
+                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': closedir() failed: %s.",
+                            dir_name, strerror(errno));
                     print_error(get_print_buffer());
                 }
                 return EXIT_FAILURE;
@@ -579,8 +563,8 @@ static int do_dir(const char* dir_name, const char* const * params)
             {
                 if (closedir(dirhandle) < 0)
                 {
-                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': closedir() failed: %s.", dir_name,
-                            strerror(errno));
+                    snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': closedir() failed: %s.",
+                            dir_name, strerror(errno));
                     print_error(get_print_buffer());
                 }
                 free(next_path);
@@ -596,13 +580,15 @@ static int do_dir(const char* dir_name, const char* const * params)
     }
     if (0 != errno)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': readdir() failed: %s.", dir_name, strerror(errno));
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s': readdir() failed: %s.", dir_name,
+                strerror(errno));
         print_error(get_print_buffer());
     }
 
     if (closedir(dirhandle) < 0)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s':closedir() failed: %s.", dir_name, strerror(errno));
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "`%s':closedir() failed: %s.", dir_name,
+                strerror(errno));
         print_error(get_print_buffer());
     }
 
@@ -622,33 +608,32 @@ static int do_dir(const char* dir_name, const char* const * params)
  * \retval EXIT_SUCCESS successful exit status.
  * \retval EXIT_FAILURE failing exit status.
  */
-static int do_file(const char* file_name, StatType* file_info, const char* const * params)
+static int do_file(const char* file_name, StatType* file_info, const char* const* params)
 {
 
     int i = 1;
-    boolean printed_print = FALSE;  /* flag for: already printed */
-    boolean printed_ls = FALSE;     /* flag for: already printed in ls mode*/
-    boolean to_print_ls = FALSE;    /* flag for: must be printed in ls mode*/
-    boolean matched = FALSE;        /* flag for: line meets filter criteria */
-    boolean filter = FALSE;         /* flag for: result of filter */
-    boolean filtered = FALSE;       /* flag for: at least one filter has been applied */
-    boolean path_given = FALSE;     /* flag for: first commandline parameter is a file/dir */
-    char test_char;
+    boolean printed_print = FALSE; /* flag for: already printed */
+    boolean printed_ls = FALSE; /* flag for: already printed in ls mode*/
+    boolean to_print_ls = FALSE; /* flag for: must be printed in ls mode*/
+    boolean matched = FALSE; /* flag for: line meets filter criteria */
+    boolean filter = FALSE; /* flag for: result of filter */
+    boolean filtered = FALSE; /* flag for: at least one filter has been applied */
+    boolean path_given = FALSE; /* flag for: first commandline parameter is a file/dir */
+    char test_char = '\0';
 
     /*check if first command line parameter is an option or a file/dir*/
     test_char = *params[1];
-    path_given = (test_char == '-') ? FALSE : TRUE;
-    if (path_given)
-    {
-        matched = TRUE;
-    }
+    path_given = ('-' == test_char) ? FALSE : TRUE;
+    matched = path_given;
 
     /* loop all command line parameters */
-    while (params[i] != NULL)
+    while (NULL != params[i])
     {
-
+        /* could be later optimzed by remembering for each params[i] element, if it
+         * is matched for the i-th parameter, store for each filter in an bool filter_array[argc]
+         * if strcmp matched for the filter e.g for type cmp_filter_type[arg]
+         */
         /* apply filters */
-
         if (strcmp(params[i], PARAM_STR_TYPE) == 0)
         {
             filter = filter_type(i, params, file_info);
@@ -766,7 +751,8 @@ int init(const char** program_args)
     if (-1 == smax_path)
     {
         smax_path = 0;
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "pathconf() () failed: %s.", strerror(errno));
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "pathconf() () failed: %s.",
+                strerror(errno));
         print_error(get_print_buffer());
         return ENODATA;
     }
@@ -799,7 +785,6 @@ int init(const char** program_args)
  *
  * \param exit_program when set to TRUE exit program immediately with EXIT_FAILURE.
  *
- *
  * \return void
  */
 void cleanup(boolean exit_program)
@@ -830,6 +815,7 @@ void cleanup(boolean exit_program)
  * A new line is printed after the message text automatically.
  *
  * \param message output on stderr.
+ *
  * \return void
  */
 void print_error(const char* message)
@@ -904,6 +890,7 @@ static boolean user_exist(const char* user_name, const boolean search_for_uid)
 static boolean has_no_user(StatType* file_info)
 {
     struct passwd* pwd = NULL;
+
     pwd = getpwuid(file_info->st_uid);
     return (pwd == NULL);
 }
@@ -955,17 +942,18 @@ static char get_file_type(const StatType* file_info)
 /**
  * \brief Filters the directory entry due to -name  parameter.
  *
- * applies -name filter (if defined) to.
+ * Applies -name filter (if defined) to path_to_examine.
  *
  * \param path_to_examine directory entry to investigate for name.
  * \param current_param currently processed parameter index.
  * \param params Program parameter arguments given by user.
  *
  * \return boolean result indicating filter has matched.
- * \retval TRUE name filter matched or not given
+ * \retval TRUE name filter matched or not given.
  * \retval FALSE no match found.
  */
-static boolean filter_name(const char* path_to_examine, const int current_param, const char* const * params)
+static boolean filter_name(const char* path_to_examine, const int current_param,
+        const char* const* params)
 {
     char* buffer = NULL;
 
@@ -981,17 +969,18 @@ static boolean filter_name(const char* path_to_examine, const int current_param,
 /**
  * \brief Filters the directory entry due to -path parameter.
  *
- * applies -name filter (if defined) to.
+ * Applies -name filter (if defined) to path_to_examine.
  *
  * \param path_to_examine directory entry to investigate for path.
  * \param current_param currently processed parameter index.
  * \param params Program parameter arguments given by user.
  *
  * \return boolean result indicating filter has matched.
- * \retval TRUE name filter matched or not given
+ * \retval TRUE name filter matched or not given.
  * \retval FALSE no match found.
  */
-static boolean filter_path(const char* path_to_examine, const int current_param, const char* const * params)
+static boolean filter_path(const char* path_to_examine, const int current_param,
+        const char* const* params)
 {
     char* buffer = NULL;
 
@@ -1008,7 +997,7 @@ static boolean filter_path(const char* path_to_examine, const int current_param,
 /**
  * \brief Filters the directory entry due to -nouser parameter.
  *
- * applies -nouser filter (if defined) to path_to_examine.
+ * Applies -nouser filter (if defined) to file_info.
  *
  * \param file_info as read from operating system.
  *
@@ -1025,24 +1014,24 @@ static boolean filter_nouser(StatType* file_info)
 /**
  * \brief Filters the directory entry due to -user parameter.
  *
- * applies -user filter (if defined) to path_to_examine.
+ * Applies -user filter (if defined) to file_info.
  *
  * \param current_param currently processed parameter index.
  * \param params Program parameter arguments given by user.
  * \param file_info as read from operating system.
  *
  * \return boolean result indicating filter has matched.
- * \retval TRUE name filter matched or not given
+ * \retval TRUE name filter matched or not given.
  * \retval FALSE no match found.
  */
-static boolean filter_user(const int current_param, const char* const * params, StatType* file_info)
+static boolean filter_user(const int current_param, const char* const* params, StatType* file_info)
 {
     unsigned int search_uid = 0;
     char * end_ptr = NULL;
     struct passwd* pwd = NULL;
 
-    search_uid = strtol(params[current_param + 1], &end_ptr, 10);
-    if ((*end_ptr != '\0') || user_exist(params[current_param + 1], FALSE))
+    search_uid = strtol(params[current_param + 1], &end_ptr, USERID_BASE);
+    if (('\0' != *end_ptr) || user_exist(params[current_param + 1], FALSE))
     {
         /*  string to int conversion failed --> we have a username */
         /*  or special case --> username is pure numeric */
@@ -1081,7 +1070,7 @@ static boolean filter_user(const int current_param, const char* const * params, 
 /**
  * \brief Filters the directory entry due to -type parameter.
  *
- * applies -type filter (if defined) to path_to_examine.
+ * Applies -type filter (if defined) to file_info.
  *
  * \param current_param currently processed parameter index.
  * \param params Program parameter arguments given by user.
@@ -1092,9 +1081,9 @@ static boolean filter_user(const int current_param, const char* const * params, 
  * \retval FALSE no match found.
  */
 
-static boolean filter_type(const int current_param, const char* const * params, StatType* file_info)
+static boolean filter_type(const int current_param, const char* const* params, StatType* file_info)
 {
-    const char* parameter1;
+    const char* parameter1 = NULL;
 
     parameter1 = params[current_param + 1];
     /* check if option argument describes the same file type as file to examine has */
@@ -1111,15 +1100,17 @@ static boolean filter_type(const int current_param, const char* const * params, 
 void print_file_change_time(const StatType* file_info)
 {
     char * buffer_char = NULL;
-    int i;
+    int i = 0;
     int written = 0;
     size_t written_time = 0;
 
     /* Convert the time into the local time format it. */
-    written_time = strftime(get_print_buffer(), MAX_PRINT_BUFFER - 1, "%b %d %H:%M", localtime(&file_info->st_mtime));
+    written_time = strftime(get_print_buffer(), MAX_PRINT_BUFFER - 1, "%b %d %H:%M",
+            localtime(&file_info->st_mtime));
     if (0 == written_time)
     {
-        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "strftime() failed: Could not print file changed time\n.");
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER,
+                "strftime() failed: Could not print file changed time\n.");
         print_error(get_print_buffer());
         return;
     }
@@ -1129,9 +1120,9 @@ void print_file_change_time(const StatType* file_info)
     buffer_char = get_print_buffer();
     for (i = 0; i < MAX_PRINT_BUFFER; i++)
     {
-        if (buffer_char[i] == ' ')
+        if (' ' == buffer_char[i])
         {
-            if (buffer_char[i + 1] == '0')
+            if ('0' == buffer_char[i + 1])
             {
                 buffer_char[i + 1] = ' ';
             }
@@ -1189,28 +1180,20 @@ void print_file_permissions(const StatType* file_info)
     {
         /*no UID-Bit */
         written = fprintf(stdout, "%c", (file_info->st_mode & S_IXUSR ? 'x' : '-'));
-        if (written < 0)
-        {
-            print_error(strerror(errno));
-        }
     }
     else if ((file_info->st_mode & S_ISUID) && (file_info->st_mode & S_IXUSR))
     {
         /* UID-Bit && Execute-Bit */
         written = fprintf(stdout, "%c", (file_info->st_mode & S_ISUID ? 's' : '-'));
-        if (written < 0)
-        {
-            print_error(strerror(errno));
-        }
     }
     else
     {
         /* UID-Bit && !Execute-Bit */
         written = fprintf(stdout, "%c", (file_info->st_mode & S_ISUID ? 'S' : '-'));
-        if (written < 0)
-        {
-            print_error(strerror(errno));
-        }
+    }
+    if (written < 0)
+    {
+        print_error(strerror(errno));
     }
 
     /* Print group permissions */
@@ -1229,28 +1212,20 @@ void print_file_permissions(const StatType* file_info)
     {
         /* no GID-Bit */
         written = fprintf(stdout, "%c", (file_info->st_mode & S_IXGRP ? 'x' : '-'));
-        if (written < 0)
-        {
-            print_error(strerror(errno));
-        }
     }
     else if ((file_info->st_mode & S_ISGID) && (file_info->st_mode & S_IXGRP))
     {
         /* GID-Bit && Execute-Bit */
         written = fprintf(stdout, "%c", (file_info->st_mode & S_ISGID ? 's' : '-'));
-        if (written < 0)
-        {
-            print_error(strerror(errno));
-        }
     }
     else
     {
         /* GID-Bit && !Execute-Bit */
         written = fprintf(stdout, "%c", (file_info->st_mode & S_ISGID ? 'S' : '-'));
-        if (written < 0)
-        {
-            print_error(strerror(errno));
-        }
+    }
+    if (written < 0)
+    {
+        print_error(strerror(errno));
     }
 
     /* Print other permissions */
@@ -1269,28 +1244,20 @@ void print_file_permissions(const StatType* file_info)
     {
         /* Sticky-Bit */
         written = fprintf(stdout, "%c", (file_info->st_mode & S_IXOTH ? 'x' : '-'));
-        if (written < 0)
-        {
-            print_error(strerror(errno));
-        }
     }
     else if ((file_info->st_mode & S_ISVTX) && (file_info->st_mode & S_IXOTH))
     {
         /* Sticky-Bit && Execute-Bit */
         written = fprintf(stdout, "%c", (file_info->st_mode & S_ISVTX ? 't' : '-'));
-        if (written < 0)
-        {
-            print_error(strerror(errno));
-        }
     }
     else
     {
         /* Sticky-Bit && !Execute-Bit */
         written = fprintf(stdout, "%c", (file_info->st_mode & S_ISVTX ? 'T' : '-'));
-        if (written < 0)
-        {
-            print_error(strerror(errno));
-        }
+    }
+    if (written < 0)
+    {
+        print_error(strerror(errno));
     }
 
     written = fprintf(stdout, "  ");
@@ -1318,18 +1285,14 @@ static void print_user_group(const StatType* file_info)
     if (NULL != password)
     {
         written = fprintf(stdout, "%5s", password->pw_name);
-        if (written < 0)
-        {
-            print_error(strerror(errno));
-        }
     }
     else
     {
         written = fprintf(stdout, "%7d", file_info->st_uid);
-        if (written < 0)
-        {
-            print_error(strerror(errno));
-        }
+    }
+    if (written < 0)
+    {
+        print_error(strerror(errno));
     }
 
     /* Print group name */
@@ -1337,27 +1300,20 @@ static void print_user_group(const StatType* file_info)
     if (NULL != password)
     {
         written = fprintf(stdout, "%9s", group_info->gr_name);
-        if (written < 0)
-        {
-            print_error(strerror(errno));
-        }
     }
     else if (NULL != group_info)
     {
         written = fprintf(stdout, "%9s", group_info->gr_name);
-        if (written < 0)
-        {
-            print_error(strerror(errno));
-        }
     }
     else
     {
         written = fprintf(stdout, "%9d", file_info->st_gid);
-        if (written < 0)
-        {
-            print_error(strerror(errno));
-        }
     }
+    if (written < 0)
+    {
+        print_error(strerror(errno));
+    }
+
 }
 
 /**
@@ -1423,6 +1379,11 @@ static void combine_ls(const StatType* file_info)
     }
 
     /* Print number of blocks */
+    /* magic number divide by 2 depends on block size of file system.
+     * The st_blocks member of the stat structure returns:
+     * The total number of physical blocks of size 512 bytes actually allocated on disk.
+       see also http://stackoverflow.com/questions/1346807/how-does-stat-command-calculate-the-blocks-of-a-file
+    */
     written = fprintf(stdout, "%5lu ", (unsigned long) file_info->st_blocks / 2);
     if (written < 0)
     {
