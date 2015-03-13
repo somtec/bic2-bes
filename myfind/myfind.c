@@ -16,14 +16,11 @@
  * -------------------------------------------------------------- review --
  */
 
-/* TODO Remove Unused Parameter in Filter*()- functions /
- __attribute((unused)) eliminieren */
 /* TODO abort operation if command is parsed successfully or give an error if there are superfluous arguments. /
  Parsen und herausfinden von falschen  Argumente von Links nach rechts
  damit die Fehlerausgabe passt und entsprechend das Programm an dieser Stelle abbricht.
  */
-/* TODO printf and fprintf error handling is not implemented till now. /
- Review unseres Programms und fehlendes Errorhandling einbauen /
+/* TODO Review unseres Programms und fehlendes Errorhandling einbauen /
  Abfragen der globalen Variablen errno nach bestimmten Systemaufrufen;
  */
 /* TODO Test it more seriously and more complete. */
@@ -161,7 +158,7 @@ void
 debug_print(const char* message);
 #else /* DEBUG_OUTPUT */
 /* suppress debug_print output */
-void debug_print(__attribute((unused))const char* message)
+void debug_print(__attribute__((unused))const char* message)
 {
 }
 #endif /* DEBUG_OUTPUT */
@@ -176,23 +173,22 @@ static void print_error(const char* message);
 static int init(const char** program_args);
 static void cleanup(boolean exit);
 
-static int do_file(const char* file_name, StatType* file_info, const char* const * params);
-static int do_dir(const char* dir_name, const char* const * params);
+static int do_file(const char* file_name, StatType* file_info, const char* const* params);
+static int do_dir(const char* dir_name, const char* const* params);
 
 static boolean user_exist(const char* user_name, const boolean search_for_uid);
 static boolean has_no_user(StatType* file_info);
 
 static char get_file_type(const StatType* file_info);
 
-static boolean filter_name(const char* path_to_examine, const int current_param, const char* const * params,
+static boolean filter_name(const char* path_to_examine, const int current_param,
+        const char* const* params);
+static boolean filter_path(const char* path_to_examine, const int current_param,
+        const char* const* params);
+static boolean filter_nouser(StatType* file_info);
+static boolean filter_user(const int current_param, const char* const* params,
         StatType* file_info);
-static boolean filter_path(const char* path_to_examine, const int current_param, const char* const * params,
-        __attribute__((unused))  StatType* file_info);
-static boolean filter_nouser(const char* path_to_examine, const int current_param, const char* const * params,
-        StatType* file_info);
-static boolean filter_user(const char* path_to_examine, const int current_param, const char* const * params,
-        StatType* file_info);
-static boolean filter_type(const char* path_to_examine, const int current_param, const char* const * params,
+static boolean filter_type(const int current_param, const char* const* params,
         StatType* file_info);
 
 static void print_file_change_time(const StatType* file_info);
@@ -628,13 +624,14 @@ static int do_dir(const char* dir_name, const char* const* params)
  * \brief Handle the file.
  *
  * \param file_name is the filename which has to be checked against the find options.
+ * \param file_info file information of file_name which has to be checked against the find options.
  * \param params is the program argument vector.
  *
  * \return int represents the exit status of do_file.
  * \retval EXIT_SUCCESS successful exit status.
  * \retval EXIT_FAILURE failing exit status.
  */
-static int do_file(const char* file_name, StatType* file_info, const char* const * params)
+static int do_file(const char* file_name, StatType* file_info, const char* const* params)
 {
 
     int i = 1;
@@ -653,7 +650,7 @@ static int do_file(const char* file_name, StatType* file_info, const char* const
 
         if (strcmp(params[i], PARAM_STR_TYPE) == 0)
         {
-            filter = filter_type(file_name, i, params, file_info);
+            filter = filter_type(i, params, file_info);
             matched = matched || filter;
             filtered = TRUE;
             ++i;
@@ -661,7 +658,7 @@ static int do_file(const char* file_name, StatType* file_info, const char* const
 
         if (strcmp(params[i], PARAM_STR_USER) == 0)
         {
-            filter = filter_user(file_name, i, params, file_info);
+            filter = filter_user(i, params, file_info);
             matched = matched || filter;
             filtered = TRUE;
             ++i;
@@ -669,14 +666,14 @@ static int do_file(const char* file_name, StatType* file_info, const char* const
 
         if (strcmp(params[i], PARAM_STR_NOUSER) == 0)
         {
-            filter = filter_nouser(file_name, i, params, file_info);
+            filter = filter_nouser(file_info);
             matched = matched || filter;
             filtered = TRUE;
         }
 
         if (strcmp(params[i], PARAM_STR_NAME) == 0)
         {
-            filter = filter_name(file_name, i, params, file_info);
+            filter = filter_name(file_name, i, params);
             matched = matched || filter;
             filtered = TRUE;
             ++i;
@@ -684,7 +681,7 @@ static int do_file(const char* file_name, StatType* file_info, const char* const
 
         if (strcmp(params[i], PARAM_STR_PATH) == 0)
         {
-            filter = filter_path(file_name, i, params, file_info);
+            filter = filter_path(file_name, i, params);
             matched = matched || filter;
             filtered = TRUE;
             ++i;
@@ -793,7 +790,7 @@ int init(const char** program_args)
 /**
  * \brief Cleanup the program.
  *
- * \params exit_program when set to TRUE exit program immediately with EXIT_FAILURE.
+ * \param exit_program when set to TRUE exit program immediately with EXIT_FAILURE.
  *
  *
  * \return void
@@ -893,7 +890,7 @@ static boolean user_exist(const char* user_name, const boolean search_for_uid)
 /**
  * \brief Test if file has no user.
  *
- * \param path_to_examine test if the given file has no user.
+ * \param file_info to test if this file has no user.
  *
  * \return FALSE File has a user, TRUE file has no user in user id data base.
  */
@@ -956,14 +953,13 @@ static char get_file_type(const StatType* file_info)
  * \param path_to_examine directory entry to investigate for name.
  * \param current_param currently processed parameter index.
  * \param params Program parameter arguments given by user.
- * \param file_info as read from operating system.
  *
  * \return boolean result indicating filter has matched.
  * \retval TRUE name filter matched or not given
  * \retval FALSE no match found.
  */
-static boolean filter_name(const char* path_to_examine, const int current_param, const char* const * params,
-        __attribute__((unused))  StatType* file_info)
+static boolean filter_name(const char* path_to_examine, const int current_param,
+        const char* const* params)
 {
     char* buffer = NULL;
 
@@ -984,14 +980,13 @@ static boolean filter_name(const char* path_to_examine, const int current_param,
  * \param path_to_examine directory entry to investigate for path.
  * \param current_param currently processed parameter index.
  * \param params Program parameter arguments given by user.
- * \param file_info as read from operating system.
  *
  * \return boolean result indicating filter has matched.
  * \retval TRUE name filter matched or not given
  * \retval FALSE no match found.
  */
-static boolean filter_path(const char* path_to_examine, const int current_param, const char* const * params,
-        __attribute__((unused))  StatType* file_info)
+static boolean filter_path(const char* path_to_examine, const int current_param,
+        const char* const* params)
 {
     char* buffer = NULL;
 
@@ -1010,16 +1005,11 @@ static boolean filter_path(const char* path_to_examine, const int current_param,
  *
  * applies -nouser filter (if defined) to path_to_examine.
  *
- * \param path_to_examine directory entry to investigate for path.
- * \param current_param currently processed parameter index.
- * \param params Program parameter arguments given by user.
  * \param file_info as read from operating system.
  *
  * \return boolean TRUE name filter matched or not given, FALSE no match found.
  */
-static boolean filter_nouser(__attribute__((unused)) const char* path_to_examine,
-        __attribute__((unused)) const int current_param, __attribute__((unused)) const char* const * params,
-        StatType* file_info)
+static boolean filter_nouser(StatType* file_info)
 {
     boolean result = FALSE;
 
@@ -1032,7 +1022,7 @@ static boolean filter_nouser(__attribute__((unused)) const char* path_to_examine
  *
  * applies -user filter (if defined) to path_to_examine.
  *
- * \param path_to_examine directory entry to investigate for path.
+ * \param current_param currently processed parameter index.
  * \param params Program parameter arguments given by user.
  * \param file_info as read from operating system.
  *
@@ -1040,8 +1030,8 @@ static boolean filter_nouser(__attribute__((unused)) const char* path_to_examine
  * \retval TRUE name filter matched or not given
  * \retval FALSE no match found.
  */
-static boolean filter_user(__attribute__((unused)) const char* path_to_examine, const int current_param,
-        const char* const * params, __attribute__((unused))  StatType* file_info)
+static boolean filter_user(const int current_param, const char* const * params,
+        StatType* file_info)
 {
     unsigned int search_uid = 0;
     char * end_ptr = NULL;
@@ -1089,7 +1079,7 @@ static boolean filter_user(__attribute__((unused)) const char* path_to_examine, 
  *
  * applies -type filter (if defined) to path_to_examine.
  *
- * \param path_to_examine directory entry to investigate for path.
+ * \param current_param currently processed parameter index.
  * \param params Program parameter arguments given by user.
  * \param file_info as read from operating system.
  *
@@ -1097,8 +1087,8 @@ static boolean filter_user(__attribute__((unused)) const char* path_to_examine, 
  * \retval TRUE name filter matched or not given
  * \retval FALSE no match found.
  */
-static boolean filter_type(__attribute__((unused)) const char* path_to_examine, const int current_param,
-        const char* const * params, StatType* file_info)
+static boolean filter_type(const int current_param, const char* const * params,
+        StatType* file_info)
 {
     const char* parameter1;
 
