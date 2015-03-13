@@ -344,16 +344,19 @@ int main(int argc, const char* argv[])
     /*get information about the file and catch errors*/
     if (!path_given)
     {
+        /* no search path defined - we set it to work directory and start */
         parameter_directory_given = FALSE;
         result = do_dir(".", argv);
     }
     else if (-1 != lstat(get_path_buffer(), &stbuf))
     {
+        /*search path defined */
         result = do_file(argv[1], &stbuf, argv);
         if (S_ISDIR(stbuf.st_mode))
         {
             found_dir = get_path_buffer();
             strcpy(start_dir, found_dir);
+            /* this condition should not happen, but its better to be safe */
             if (NULL == found_dir)
             {
                 /* use current directory */
@@ -623,15 +626,16 @@ static int do_file(const char* file_name, StatType* file_info, const char* const
 {
 
     int i = 1;
-    boolean printed_print = FALSE;
-    boolean printed_ls = FALSE;
-    boolean to_print_ls = FALSE;
-    boolean matched = FALSE;
-    boolean filter = FALSE;
-    boolean filtered = FALSE;
-    boolean path_given = FALSE;
+    boolean printed_print = FALSE;  /* flag for: already printed */
+    boolean printed_ls = FALSE;     /* flag for: already printed in ls mode*/
+    boolean to_print_ls = FALSE;    /* flag for: must be printed in ls mode*/
+    boolean matched = FALSE;        /* flag for: line meets filter criteria */
+    boolean filter = FALSE;         /* flag for: result of filter */
+    boolean filtered = FALSE;       /* flag for: at least one filter has been applied */
+    boolean path_given = FALSE;     /* flag for: first commandline parameter is a file/dir */
     char test_char;
 
+    /*check if first command line parameter is an option or a file/dir*/
     test_char = *params[1];
     path_given = (test_char == '-') ? FALSE : TRUE;
     if (path_given)
@@ -639,8 +643,11 @@ static int do_file(const char* file_name, StatType* file_info, const char* const
         matched = TRUE;
     }
 
+    /* loop all command line parameters */
     while (params[i] != NULL)
     {
+
+        /* apply filters */
 
         if (strcmp(params[i], PARAM_STR_TYPE) == 0)
         {
@@ -687,6 +694,7 @@ static int do_file(const char* file_name, StatType* file_info, const char* const
             continue;
         }
 
+        /* apply actions */
         if (strcmp(params[i], PARAM_STR_LS) == 0)
         {
             if (filtered && matched)
@@ -696,6 +704,7 @@ static int do_file(const char* file_name, StatType* file_info, const char* const
             }
             else
             {
+                /* special case -ls defined before filter parameters */
                 to_print_ls = TRUE;
             }
         }
@@ -711,6 +720,8 @@ static int do_file(const char* file_name, StatType* file_info, const char* const
         ++i;
     }
 
+    /* special cases */
+    /* no -print action or no filter parameter on command line */
     if ((matched && !printed_print && !printed_ls) || (!filtered))
     {
         if (to_print_ls)
