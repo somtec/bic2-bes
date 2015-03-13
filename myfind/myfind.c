@@ -632,9 +632,6 @@ static int do_file(const char* file_name, StatType* file_info, const char* const
     boolean path_given = FALSE;
     char test_char;
 
-    /* TODO optimize while loop string compares, in the first loop remember if a strcmp machted
-     * already, next time do short circuit evaluation (found_type || (strcmp(params[i], PARAM_STR_TYPE) == 0)) etc.
-     */
     test_char = *params[1];
     path_given = (test_char == '-') ? FALSE : TRUE;
     if (path_given)
@@ -1304,8 +1301,6 @@ static void print_user_group(const StatType* file_info)
     struct passwd* password;
     struct group* group_info;
     int written = 0;
-
-    /* TODO use format string constant instead of hard coded strings */
 
     /* Print user name */
     password = getpwuid(file_info->st_uid);
