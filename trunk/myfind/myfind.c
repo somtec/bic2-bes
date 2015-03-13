@@ -496,7 +496,7 @@ static void print_usage(void)
     {
         print_error(strerror(errno));
     }
-    written = printf("           -path <glob-pattern>\n");
+    written = printf("           -name <glob-pattern>\n");
     if (written < 0)
     {
         print_error(strerror(errno));
@@ -759,7 +759,8 @@ int init(const char** program_args)
     if (-1 == smax_path)
     {
         smax_path = 0;
-        print_error("pathconf() failed: Maximum path length can not be determined.");
+        snprintf(get_print_buffer(), MAX_PRINT_BUFFER, "pathconf() () failed: %s.", strerror(errno));
+        print_error(get_print_buffer());
         return ENODATA;
     }
 
