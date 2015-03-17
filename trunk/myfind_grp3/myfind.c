@@ -1,3 +1,7 @@
+/* ### FB G14: All feedback of Andrea Maierhofer, Reinhard Mayr, Thomas Schmid */
+/* ### FB G14: is marked with the #### FB group number and in german ;-) */
+
+
 /**
  * @file myfind.c
  *
@@ -37,21 +41,27 @@
 /*
  * --------------------------------------------------------------- globals --
  */
-
+/* ### FB G14: sprechende Namen leichter lesbar als Abkürzungen */
+/* ### FB G14: was passiert wenn sich der Datentyp ändert - Name mitändern? */
 static const char *const_PRM;
 
 /*
  * ------------------------------------------------------------- functions --
  */
 
+/* ### FB G14: sprechende Namen leichter lesbar Abkürzungen */
 void do_file(const char *file_name, const int dparam, const char * const *parms);
 void do_dir(const char *dir_name, const int dparam, const char * const *parms);
+/* ### FB G14: Toter Code, wird nicht aufgerufen */
 void printlink(char *name);
+/* ### FB G14: Toter Code, wird nicht aufgerufen */
 void strmode(mode_t mode, char *p);
 
 
 
 int main(int argc, const char * const *argv) {
+/* ### FB G14: Warum nicht gleich alle Variablen initialisieren? */
+/* ### FB G14: Schleifenvariablennamen werden meist als i (k, n, ...) benannt */
     int i_i = 0;
     long val = 0;
     const char *action;
@@ -60,20 +70,26 @@ int main(int argc, const char * const *argv) {
     
     errno = 0;
     
+/* ### FB G14: const_PRM ist nicht notwendig */
     const_PRM = argv[0];
     
     if(argc <= 1) {
+/* ### FB G14: Ausgabe auf stderr wird nur in der Console auf stdout umgeleitet */
+/* ### FB G14: Fehlerbehandlung bei fprintf fehlt*/
         fprintf(stderr,"Usage: %s <directory> <action> ...\n", argv[0]);
         fprintf(stderr,"        -type [bcdpfls]\n");
         fprintf(stderr,"        -user <name/uid>\n");
         fprintf(stderr,"        -name <glob-pattern>\n");
         fprintf(stderr,"        -print\n");
+/* ### FB G14: Usage-Ausgabe mit EXIT_SUCCESS beenden */
         return EXIT_FAILURE;
     } else {
         /* Alle mitgegebenen Parameter auf korrektheit pr�fen */
         if(argc >= 3) {
+/* ### FB G14: argv auf anderes Argument zeigen lassen unerwartet, eigene Variable verwenden. */
             argv = &argv[2];
             
+/* ### FB G14: Lesbarkeit, nächstes if besser lesbar */
             for(i_i=2;i_i<argc;i_i++) {
                 /* Diese Parameter sind erlaubt */
                 
@@ -111,6 +127,7 @@ int main(int argc, const char * const *argv) {
                                   if(strcmp(action,"-user") == 0) {
                                       if((ppentry = getpwnam(*argv)) == NULL) {
                                           val = strtol(*argv, &pointer_e, 10);
+                                          /* ### FB G14: Selbstzuweisung wofür? Kompiliert nicht mit den Einstellungen von Hrn. Petrovitsch. */
                                           val = val;
                                           
                                           if (pointer_e == *argv) {
@@ -127,10 +144,13 @@ int main(int argc, const char * const *argv) {
                               }
                           }
                           } else {
+/* ### FB G14: Warum auf Deutsch wenn Rest Englisch? */
                               fprintf(stderr,"%s: Ungültig %s\n", const_PRM, *argv);
                               return EXIT_FAILURE;
                           }
-                          
+/* ### FB G14: Einrückung Code schwierig zu lesen */
+
+
                           argv++;
                           }
                           
@@ -142,6 +162,9 @@ int main(int argc, const char * const *argv) {
                           return EXIT_SUCCESS;
                           }
                           
+
+/* ### FB G14: Toter Code, wird nicht aufgerufen */
+/* ### FB G14: Was macht diese Funktion? Doxygen? */
                           void strmode(mode_t mode, char *p) {
                               /* print type */
                               switch (mode & S_IFMT) {
@@ -163,6 +186,7 @@ int main(int argc, const char * const *argv) {
                                   case S_IFSOCK:
                                       *p++ = 's';
                                   break;
+/* ### FB G14: Wofür #ifdef ? */
                                 #ifdef S_IFIFO
                                   case S_IFIFO:/* first in first out */
                                       *p++ = 'p';
@@ -174,6 +198,7 @@ int main(int argc, const char * const *argv) {
                                       break;
                                     #endif
                                   default:
+/* ### FB G14: Fehlerfall? */
                                       *p++ = '?';
                                       break;
                               }
@@ -186,6 +211,8 @@ int main(int argc, const char * const *argv) {
                                   *p++ = 'w';
                               else
                                   *p++ = '-';
+/* ### FB G14: Warum Switch? */
+/* ### FB G14: Code verlässt sich darauf, dass alle Cases abgefragt werden. Default? */
                               switch (mode & (S_IXUSR | S_ISUID)) {
                                   case 0:
                                       *p++ = '-';
@@ -250,11 +277,16 @@ int main(int argc, const char * const *argv) {
                               *p = '\0';
                           }
                           
+/* ### FB G14: Funktionsanfang schwer zu finden wegen Einrückung */
+/* ### FB G14: Toter Code */
+
                           void printlink(char *name)      {
                               int lnklen;
                               char path[PATH_MAX + 1];
                               
                               if ((lnklen = readlink(name, path, PATH_MAX)) == -1) {
+/* ### FB G14: const_PRM kann durch Übergabeparameter ersetzt werden. */
+/* ### FB G14: Englisch/Deutsche Ausgabe */
                                   fprintf(stderr,"%s: linking fehler %s", const_PRM, name);
                                   return;
                               }
@@ -264,12 +296,14 @@ int main(int argc, const char * const *argv) {
                           
                           
                           void do_file(const char *file_name, const int dparam, const char * const *parms) {
+/* ### FB G14: Einheitliches Namensschema für Zeiger verwenden ppentry vs. inexof */
                               struct stat file_info;
                               struct passwd *ppentry = NULL;
                               struct group *pGrpEntry = NULL;
                               const char *argument;
                               const char *action;
                               char *indexof;
+/* ### FB G14: Typname in Variablenname kann bei Typänderung zu vielen Änderungen im Code führen. */
                               char *pointer_e;
                               char *name;
                               /*  char *test;*/
@@ -277,6 +311,7 @@ int main(int argc, const char * const *argv) {
                               int i_len = 0;
                               /*  int i_test = 0;*/
                               int file_okay = 0;
+/* ### FB G14: Sonst überall Englische Namen / international wird Englisch verwendet. */
                               int dir_ausgabe = 0;
                               long val = 0;
                            
@@ -291,6 +326,11 @@ int main(int argc, const char * const *argv) {
                                           
                                           errno = 0;
                                           
+/* ### FB G14: Klammern bei if sind praktisch wenn man im Team arbeitet, dann muss man beim */
+/* ### FB G14: Erweitern vom Code nicht Klammern nachtragen und Dateiunterschiede sind leichter erkennber. */
+/* ### FB G14: Klammernverwendung nich konsistent bei if mit nur 1 Anweisung danach. */
+
+
                                           if(strcmp(action,"-nouser") == 0) {
                                               
                                               if((ppentry = getpwuid(file_info.st_uid)) != NULL)
@@ -377,6 +417,8 @@ int main(int argc, const char * const *argv) {
                                                          if(name != NULL)
                                                              strcpy(name, indexof+1);
                                                          else
+/* ### FB G14: Ausgaben für den User sollten keine Rechtschreibfehler enthalten. */
+/* ### FB G14: Bei Variablen/Funktionen etc. wird die Suche im Code nicht gut funktionieren. */
                                                              fprintf(stderr,"%s: Memory owerflow: %s\n", const_PRM, file_name);
                                                      } else {
                                                          name = malloc(strlen(file_name) * sizeof(char));
@@ -388,6 +430,8 @@ int main(int argc, const char * const *argv) {
                                                      
                                                      if(fnmatch(argument,name,FNM_PATHNAME) != 0)
                                                          file_okay = 1;
+/* ### FB G14: Ist name immer entweder NULL oder mit etwas was von malloc() zurückkommt?
+/* ### FB G14: Freigabe von Speicher welchen man nicht selbst angefordert hat? */
                                                      
                                                      free(name);
                                                      /*}*/
@@ -411,9 +455,11 @@ int main(int argc, const char * const *argv) {
                                                      }
                                                      do_dir(file_name,dparam,parms);
                                                  } else {
-                                                    
+/* ### FB G14: Leerer Else Toter Code, Lesbarkeit. */
+
                                              }
                                              } else {
+/* ### FB G14: strerror(errno) gefällt uns. */
                                                  
                                                  fprintf(stderr,"%s do_file Error: %d - %s", const_PRM, errno, strerror(errno));
                                              }
