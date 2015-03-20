@@ -287,10 +287,12 @@ int main(int argc, const char * const *argv) {
                               if ((lnklen = readlink(name, path, PATH_MAX)) == -1) {
 /* ### FB G14: const_PRM kann durch Übergabeparameter ersetzt werden. */
 /* ### FB G14: Englisch/Deutsche Ausgabe */
+/* ### FB G14: Kein \n am Ende der Ausgabe  */
                                   fprintf(stderr,"%s: linking fehler %s", const_PRM, name);
                                   return;
                               }
                               path[lnklen] = '\0';
+/* ### FB G14: Kein \n am Ende der Ausgabe */
                               fprintf(stdout," -> %s", path);
                           }
                           
@@ -478,6 +480,9 @@ int main(int argc, const char * const *argv) {
                                              void do_dir(const char *dir_name, const int dparam, const char * const *parms) {
                                                  DIR *verzeichnis;
                                                  struct dirent *files;
+/* ### FB G14: Verwendung von PATH_MAX ist gefährlich, da Betriebssystem u.U. überlange Pfade zulassen */
+/* Eine Erklärung findet sich unter http://insanecoding.blogspot.co.at/2007/11/pathmax-simply-isnt.html */
+
                                                  char path[PATH_MAX];
                                                  int i_closedir = 0;
                                                  

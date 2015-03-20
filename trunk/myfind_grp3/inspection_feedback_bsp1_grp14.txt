@@ -1,0 +1,50 @@
+Prüfung auf Betriebssysteme - C Richtlinien
+https://cis.technikum-wien.at/documents/bic/2/bes/semesterplan/lu/c-rules.html
+
+* Code compiliert mit vorgegebenen Einstellungen nicht (Richtlinie 3)
+* Makefile sollte einen Modulkopf enthalten (Richtlinie 1)
+* Verwendung von PATH_MAX für Pfadlänge anstatt dynamischer Festlegung (Richtlinie 18)
+* Wichtige Konstanten sollten symbolische Namen erhalten (Richtlinie 19)
+* Einrückungen sollten konsistent sein (Richtlinie 25)
+* Jede switch Anweisung soll einen default: Zweig enthalten. 
+  Kann dieser nicht erreicht werden, so ist an dieser Stelle assert(0) zu schreiben (Richtlinie 20)
+
+Check des Programmaufrufes
+* Synopsis in der Usage Meldung  nicht korrekt (Parameter nicht als optional markiert)
+* Keine Fehlermeldung bei falschem Aufruf (Z.B. ./myfind -type sollte eine Fehlermeldung bringen)
+* Wenn kein Pfad, aber eine Option angegeben wird erscheint eine Fehlermeldung.
+  Stattdessen sollte aber das aktuelle Verzeichnis durchsucht werden. 
+  Aufruf war: ./myfind -type 
+  Meldung war: ./myfind: Ungültig d
+* Viele Aufrufe lieferen Debug Ausgabe zurück 
+  "0 - Success./myfind do_file Error: 0 - Success./myfind do_file Error: 0 -"
+* Absturz bei Aufruf von ./myfind . -name "*.o"  
+  ** glibc detected *** ./myfind: free(): invalid next size (fast): 0x09fb0028 ***
+* Falsche Fehlermeldung bei nicht existierendem User
+  Aufruf war: ./myfind . -user hugo
+  Meldung war: Invalid argument 'hugo' to '-user'
+* Fehlerhaftes Argument als erstes Argument löst keine Meldung aus
+  Aufruf war:  myfind -gehtnet
+
+  
+ 
+  
+
+  
+  
+  
+
+
+
+  
+  
+
+ 
+
+
+   
+
+
+  
+
+
