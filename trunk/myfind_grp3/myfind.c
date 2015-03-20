@@ -127,7 +127,7 @@ int main(int argc, const char * const *argv) {
                                   if(strcmp(action,"-user") == 0) {
                                       if((ppentry = getpwnam(*argv)) == NULL) {
                                           val = strtol(*argv, &pointer_e, 10);
-                                          /* ### FB G14: Selbstzuweisung wofür? Kompiliert nicht mit den Einstellungen von Hrn. Petrovitsch. */
+                                          /* ### FB G14: Selbstzuweisung wofür? Kompiliert nicht mit den vorgegebenen Einstellungen  */
                                           val = val;
                                           
                                           if (pointer_e == *argv) {
