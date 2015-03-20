@@ -430,8 +430,12 @@ int main(int argc, const char * const *argv) {
                                                      
                                                      if(fnmatch(argument,name,FNM_PATHNAME) != 0)
                                                          file_okay = 1;
-/* ### FB G14: Ist name immer entweder NULL oder mit etwas was von malloc() zurückkommt?
-/* ### FB G14: Freigabe von Speicher welchen man nicht selbst angefordert hat? */
+/* ### FB G14: Ist name immer entweder NULL oder mit etwas was von malloc() zurückkommt? */
+/* ### FB G14: Ist beim derzeitigen Code ok, kann aber bei Code-Änderungen leicht fehlschlagen. */
+/* ### FB G14: Duplicate Code mit malloc/strcpy kann auf sequentiellen Code geändert werden. */
+/* ### FB G14: Dann kommt es zu nicht zu Freigabe von Speicher welchen, man nicht selbst angefordert hat. */
+/* ### FB G14: Nach dem Freigeben mit free() name=NULL setzen, dann stürzt zwar das Programm ab bei fehlerhaftem Code, aber es wird kein */
+/* ### FB G14: Speicher freigegeben, den man selbst nicht angefordert hat. */
                                                      
                                                      free(name);
                                                      /*}*/
