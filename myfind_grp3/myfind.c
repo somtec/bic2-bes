@@ -84,7 +84,7 @@ int main(int argc, const char * const *argv) {
 /* ### FB G14: Usage-Ausgabe mit EXIT_SUCCESS beenden */
         return EXIT_FAILURE;
     } else {
-        /* Alle mitgegebenen Parameter auf korrektheit pr�fen */
+        /* Alle mitgegebenen Parameter auf korrektheit prüfen */
         if(argc >= 3) {
 /* ### FB G14: argv auf anderes Argument zeigen lassen unerwartet, eigene Variable verwenden. */
             argv = &argv[2];
@@ -99,7 +99,7 @@ int main(int argc, const char * const *argv) {
                        
                        action = *argv;
                        
-                       /* Diese Funktionen ben�tigen auch Argumente! */
+                       /* Diese Funktionen benötigen auch Argumente! */
                        if(strcmp(action,"-user") == 0 || strcmp(action,"-name")  == 0 ||  strcmp(action,"-type") == 0)
                           {
                               
@@ -474,7 +474,7 @@ int main(int argc, const char * const *argv) {
 
                                              
                                              
-                                             
+/* ### FB G14: Was macht diese Funktion? Doxygen? */
                                              void do_dir(const char *dir_name, const int dparam, const char * const *parms) {
                                                  DIR *verzeichnis;
                                                  struct dirent *files;
@@ -488,7 +488,7 @@ int main(int argc, const char * const *argv) {
                                                      while((files = readdir(verzeichnis)) != NULL) {
                                                          errno = 0;
                                                          snprintf(path, (size_t) PATH_MAX, "%s/%s", dir_name, files->d_name);
-                                                         
+/* ### FB G14:besser strcmp statt die Kombinationa aus strncmp und strlen verwenden */
                                                          if((strncmp(files->d_name, "..", 2) == 0  && strlen(files->d_name) == 2) ||
                                                             (strncmp(files->d_name, "." , 1) == 0  && strlen(files->d_name) == 1)) {
                                                          } else {
@@ -498,10 +498,14 @@ int main(int argc, const char * const *argv) {
                                                      
                                                      i_closedir = closedir(verzeichnis);
                                                      if(i_closedir == -1) {
+/* ### FB G14: Warum wird do_file aufgerufen wenn closedir fehlschlägt ? */
+/* Ausnutzung eines Nebeneffektes oder Übergehen des Fehlers ?*/
                                                          do_file(dir_name,dparam,parms);
                                                          
                                                      }
                                                  } else {
+/* ### FB G14: Warum wird do_file aufgerufen wenn opendir fehlschlägt ? */
+/* Ausnutzung eines Nebeneffektes oder Übergehen des Fehlers ?*/
                                                      do_file(dir_name,dparam,parms);
                                                      
                                                  }
