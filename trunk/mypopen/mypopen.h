@@ -29,11 +29,7 @@
 /*
  * --------------------------------------------------------------- defines --
  */
-#define READING_END 0
-#define WRITING_END 1
-#define EXIT_FAILURE 1
 #define RETURN_FAILURE -1
-#define FORK_SLEEP_TIME 500000
 
 /*
  * -------------------------------------------------------------- typedefs --
@@ -48,35 +44,37 @@
  */
 
 /**
- * \brief popen clone
  *
- * This function creates a child process executing the command given in
- * \a cmd, opens a unnamed pipe, redirects stdin (if \a type is equal
- * to "w") or stdout (if \a type is equal to "r") of the child
- * process to the pipe and returns a file pointer to the pipe end, that
- * is not used by the child process to the caller.
+ * \brief This function is a simplified replacement for popen().
  *
- * \param cmd command to execute in the context of the child process
- * \param type "r" or "w" depending on whether the parent process
- *        intends to read from or write to the pipe.
+ * This functions opens a pipe, forks a child process and invokes the shell in the child process.
+ * Since a pipe is by definition unidirectional, the type argument may specify only reading or writing.
+ * The command argument is a pointer to a null-terminated string containing a shell command line.
+ * This command is passed to /bin/sh using the -c flag.
+ * The type argument is a pointer to a null-terminated string which must contain either the letter 'r'
+ * for reading or the letter 'w' for writing.
+ * The return value from mypopen() is a normal standard I/O stream in all respects save that it
+ * must be closed with mypclose().
  *
- * \return file pointer to the parent's pipe end or NULL in case of an error
+ * \param command the command to be executed in the shell.
+ * \param type "w" parent wants to write to pipe, "r" parent wants to read from pipe.
  *
+ * \return NULL if mypopen failed, else return the usable file pointer of the parent.
  */
 extern FILE *mypopen(const char *cmd, const char *type);
 
 /**
- * \brief pclose clone
+ * \brief Simplified version of pclose(), used in combination with mypopen.
  *
  * This function closes the pipe, waits for the child process to exit
  * and retrieves and returns the exit status of the child.
  *
- * \param fp file pointer to parent's pipe end
+ * \param stream file pointer previously opened by mypopen.
  *
- * \return exit status of child process or -1 in case of an error
+ * \return exit status of child process or RETURN_FAILURE in case of an error.
  *
  */
-extern int mypclose(FILE *fp);
+extern int mypclose(FILE *stream);
 
 #endif /* _MYPOPEN_H_ */
 
