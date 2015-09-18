@@ -62,6 +62,8 @@ int buffer_index = 0;
 int buffer_size = -1;
 int buffer_id = -1;
 int *buffer_ptr = NULL;
+
+static const int SIZE_BASE = 10;
 /*
  * --------------------------------------------------------------- static --
  */
@@ -112,7 +114,7 @@ int get_buffer_size(const int argc, char* argv[])
 		{
 			case 'm':
 				/* convert buffer size string to numeric  */
-				size = strtol(optarg, &phelper, 10);
+				size = strtol(optarg, &phelper, SIZE_BASE);
 				if (errno != 0)
 				{
 					fprintf(stderr, "%s: %s %s.\n", g_program_name, "could not convert argument", strerror(errno));
